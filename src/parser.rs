@@ -127,9 +127,7 @@ named!(external_function<CompleteStr, TopLevelOperation>,
 
 named!(empty_list<CompleteStr, Expression>,
   do_parse!(
-    tag!("(") >>
-    ws!(many0!(ws!(token_comment))) >>
-    tag!(")") >>
+    tag!("None") >>
     (Expression::EmptyList)
   )
 );
@@ -452,7 +450,7 @@ named!(global_data<CompleteStr, GlobalValue>,
 
 named!(global_empty<CompleteStr, GlobalValue>,
   do_parse!(
-    tag!("nil") >>
+    tag!("None") >>
     (GlobalValue::Number(0))
   )
 );

@@ -54,17 +54,17 @@ now is to be a MINIMAL Lisp that can be self hosted. Specifically:
 * immutable cons data structure
 
 ```clojure
-(cons 42 nil) ; returns the memory location of cons
+(cons 42 None) ; returns the memory location of cons
 ```
 ```clojure
-(head (cons 42 nil) ; return the head value 42
+(head (cons 42 None) ; return the head value 42
 ```
 ```clojure
-(tail (cons 42 nil) ; returns the memory location of tail
+(tail (cons 42 None) ; returns the memory location of tail
 ```
 
 ```clojure
-(cons 1 (cons 2 (cons 3 nil)) ; returns a linked list
+(cons 1 (cons 2 (cons 3 None)) ; returns a linked list
 ```
 
 ```clojure
@@ -169,7 +169,7 @@ When necessary, low level web assembly can be directly inlined
 * **string** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
 * **symbol** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `":hello_world"`)
 * **bool** - a 32-bit number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
-* **nil** - a 32-bit pointer to value that represents nothingness
+* **None** - a 32-bit pointer to value that represents nothingness
 * **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(data 1 true :hey (data :more-data ())`). Use this for embedding raw data into your application memory on startup.
 
 ## Functions
