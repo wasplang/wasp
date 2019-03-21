@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <title>Wasp</title>
+  </head>
+  <body>
+    <textarea rows="8" cols="80">hey</textarea> <button>Compile</button>
+    <div></div>
+    <script>
+      document.querySelector("button").addEventListener("click", function() {
+        let utf8dec = new TextDecoder("utf-8");
+        let memory = null;
+        function fromCString(start) {
+          const str = [];
+          let i = start;
+          while (memory[i] !== 0) {
+            str.push(memory[i]);
+            i++;
+          }
+          return utf8dec.decode(new Uint8Array(str));
+        }
+        fetch("compiler.wasm")
+          .then(response => response.arrayBuffer())
+          .then(bytes => {
+            return WebAssembly.instantiate(bytes, {
+              env: {
+                console_log: function(message_start) {
+                  let _message = fromCString(message_start);
+                  document.querySelector("div").innerHTML += _message + "\n";
+                }
+              }
+            });
+          })
+          .then(results => {
+            memory = new Uint8Array(results.instance.exports.memory.buffer);
+            let code = document.querySelector("textarea").value;
+            let pCode = results.instance.exports.malloc(code.length + 1);
+            for (var i = 0; i < code.length; i++) {
+              memory[pCode + i] = code.charCodeAt(i);
+            }
+            memory[pCode + i] = 0;
+            console.log(results.instance.exports.main(pCode));
+          });
+      });
+    </script>
+  </body>
+</html>
