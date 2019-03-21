@@ -3,10 +3,10 @@
   <head>
     <title>Wasp</title>
     <script src="https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js"></script>
-    <script src="https://unpkg.com/wasm-module@latest/wasm-module.js"></script>
+    <script src="https://unpkg.com/web-dom@latest/web-dom.js"></script>
   </head>
   <body>
     <canvas id="screen" width="500" height="200"></canvas>
-    <wasm-module src="canvas.wasm"></wasm-module>
+    <web-dom module="canvas.wasm"></web-dom>
   </body>
 </html>
