@@ -1,5 +1,5 @@
 # Wasp 🐝
-a programming language for extremely performant and concise web assembly modules
+a programming language for extremely concise web assembly modules
 
 **warning:** this compiler is very alpha and error messages aren't the best, but it works and language is simple!
 
@@ -18,8 +18,6 @@ a programming language for extremely performant and concise web assembly modules
 * [x] test framework support
 * [x] easy project dependency management
 * [ ] self hosting
-* [ ] code pruning and inlining
-* [ ] type inference
 
 # Quickstart
 
@@ -46,7 +44,7 @@ If you think your standard library is out of date, just run `wasp vendor`
 
 # Simple Data Structures
 
-Wasp is an extremely basic language and standard library.
+Wasp is an extremely basic language and standard library. Everything is a linked list.
 
 ## Linked List
 
@@ -66,100 +64,6 @@ Wasp is an extremely basic language and standard library.
 
 ```clojure
 (# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 nil)))
-```
-## Map
-
-```clojure
-(# map :a 1 :b 2) ; {a:1, b:2}
-```
-
-```clojure
-(map_get (# map :a 1 :b 2) :a) ; 1
-```
-
-```clojure
-(map_set (# map :a 1 :b 2) :c 3) ;  {a:1, b:2, c:3}
-```
-
-```clojure
-(map_remove (# map :a 1 :b 2) :a) ; {b:2}
-```
-
-## Vector
-
-```clojure
-(# vec 1 2 3) ; [1 2 3]
-```
-
-```clojure
-(vec_push (# vec 1 2 3) 4) ; [1 2 3 4]
-```
-
-```clojure
-(vec_pop (# vec 1 2)) ;  2
-```
-
-```clojure
-(vec_get (# vec 1 2 3) 1) ; 2
-```
-
-```clojure
-(vec_len (# vec 1 2 3)) ; 3 
-```
-
-```clojure
-(vec_remove (# vec 1 2) 0) ; [2]
-```
-
-```clojure
-(vec_concat (# vec 1 2) (# vec 3 4)) ; [ 1 2 3 4 ]
-```
-
-# Types
-
-```clojure
-(deftype point x i32 y i32)
-```
-
-```clojure
-(sizeof point) ; 8
-```
-
-```clojure
-(defn create_point [x y]
-  (let [ p (malloc (sizeof point))]
-         (set p point.x x)
-         (set p point.y y)
-         p))
-```
-
-```clojure
-(get (create_point 1 2) point.x) ; 1
-```
-
-```clojure
-(set point point.x 123)
-```
-
-```clojure
-(deftype triangle a point b point c point )
-```
-
-```clojure
-(sizeof triangle) ; 24
-```
-
-```clojure
-(defn create_triangle [a b c]
-  (let [ t (malloc (sizeof triangle))]
-         (memcopy a (+ t traingle.a) (sizeof point))
-         (memcopy b (+ t traingle.b) (sizeof point))
-         (memcopy c (+ t traingle.c) (sizeof point))
-         t))
-```
-
-```clojure
-(get (create_triangle (create_point 9 2) (create_point 1 2) (create_point 1 2)) triangle.a.x) ; 9
 ```
 
 # Drawing
