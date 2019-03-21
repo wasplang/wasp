@@ -1,4 +1,4 @@
-(defn-wasm ^:export malloc [i32] [i32]
+(pub defn-wasm malloc [i32] [i32]
   ; this function creates an ever increasing memory allocation
   ; it writes the length in the first 4 bytes of the block
   ; followed by an zero byte to represent its free
@@ -25,5 +25,5 @@
   END)
 
 (def size 20)
-(defn ^:export main []
+(pub defn main []
   (malloc size))

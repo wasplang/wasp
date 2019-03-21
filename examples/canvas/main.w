@@ -5,9 +5,9 @@
 (extern CanvasRenderingContext2D_set_fillStyle [canvas color])
 (extern CanvasRenderingContext2D_fillRect [canvas x y w h])
 
-(def colors (data "black" "grey" "red"))
+(def colors ("black" "grey" "red"))
 
-(defn ^:export main []
+(pub defn main []
   (let [window (global_getWindow)
         document (Window_get_document window)
         canvas (Document_querySelector document "#screen")

@@ -3,5 +3,5 @@
   (console_log "heads!"))
 (defn tails []
   (console_log "tails!"))
-(defn ^:export main [h]
+(pub defn main [h]
   (call (fnsig [] i32) (if (== h 1) heads tails)))

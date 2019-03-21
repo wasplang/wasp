@@ -331,9 +331,9 @@ named!(define_wasm_function<CompleteStr, TopLevelOperation>,
   do_parse!(
     tag!("(")   >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("defn-wasm"))   >>
+    external_name:opt!( ws!(tag!("pub"))) >>
     many0!(ws!(token_comment)) >>
-    external_name:opt!( ws!(tag!("^:export"))) >>
+    ws!(tag!("defn-wasm"))   >>
     many0!(ws!(token_comment)) >>
     function_name: ws!(token_identifier) >>
     many0!(ws!(token_comment)) >>
@@ -370,9 +370,9 @@ named!(define_function<CompleteStr, TopLevelOperation>,
   do_parse!(
     tag!("(")   >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("defn"))   >>
+    external_name:opt!( ws!(tag!("pub"))) >>
     many0!(ws!(token_comment)) >>
-    external_name:opt!( ws!(tag!("^:export"))) >>
+    ws!(tag!("defn"))   >>
     many0!(ws!(token_comment)) >>
     function_name: ws!(token_identifier) >>
     many0!(ws!(token_comment)) >>
@@ -444,8 +444,7 @@ named!(global_identifier<CompleteStr, GlobalValue>,
 named!(global_data<CompleteStr, GlobalValue>,
   do_parse!(
     tag!("(")  >>
-    ws!(tag!("data"))  >>
-    values: ws!(many0!(ws!(alt!(global_value|global_identifier)))) >>
+    values: ws!(many1!(ws!(alt!(global_value|global_identifier)))) >>
     tag!(")")  >>
     (GlobalValue::Data(values))
   )
@@ -453,9 +452,7 @@ named!(global_data<CompleteStr, GlobalValue>,
 
 named!(global_empty<CompleteStr, GlobalValue>,
   do_parse!(
-    tag!("(") >>
-    ws!(many0!(ws!(token_comment))) >>
-    tag!(")") >>
+    tag!("nil") >>
     (GlobalValue::Number(0))
   )
 );
