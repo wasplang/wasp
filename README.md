@@ -115,6 +115,36 @@ Wasp is an extremely basic language and standard library.
 (vec_concat (# vec 1 2) (# vec 3 4)) ; [ 1 2 3 4 ]
 ```
 
+# Types
+
+```clojure
+(deftype point x i32 y i32)
+```
+
+```clojure
+(sizeof point) ; 8
+```
+
+```clojure
+(get p point.x)
+```
+
+```clojure
+(set point point.x 123)
+```
+
+```clojure
+(deftype triangle a point b point c point )
+```
+
+```clojure
+(sizeof triangle) ; 24
+```
+
+```clojure
+(get t triangle.a.x 12)
+```
+
 # Drawing
 
 Using [wasm-module](https://github.com/richardanaya/wasm-module) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
