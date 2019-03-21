@@ -1,5 +1,5 @@
 # Wasp 🐝
-a Lisp programming language for extremely performant and concise web assembly modules
+a programming language for extremely performant and concise web assembly modules
 
 **warning:** this compiler is very alpha and error messages aren't the best, but it works and language is simple!
 
@@ -44,14 +44,11 @@ At this point we will have a web assembly module with a single exported main fun
 
 If you think your standard library is out of date, just run `wasp vendor`
 
-# Lisp like its 1959
+# Simple Data Structures
 
-Wasp is an extremely basic language and standard library. It's primary goal right
-now is to be a MINIMAL Lisp that can be self hosted. Specifically:
-* emphasis on recursion
-* functions can be passed around as arguments
-* symbols
-* immutable cons data structure
+Wasp is an extremely basic language and standard library.
+
+## Linked List
 
 ```clojure
 (cons 42 nil) ; returns the memory location of cons
@@ -70,8 +67,46 @@ now is to be a MINIMAL Lisp that can be self hosted. Specifically:
 ```clojure
 (# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 ())))
 ```
+## Map
 
-Other major features that are Lispy may be added in the future.
+```clojure
+(# map :a 1 :b 2) ; {a:1, b:2}
+```
+
+```clojure
+(map_get (# map :a 1 :b 2) :a) ; 1
+```
+
+```clojure
+(map_set (# map :a 1 :b 2) :c 3) ;  {a:1, b:2, c:3}
+```
+
+```clojure
+(map_remove (# map :a 1 :b 2) :a) ; {b:2}
+```
+
+## Vector
+
+```clojure
+(# vec 1 2 3) ; [1 2 3]
+```
+
+```clojure
+(vec_push (# vec 1 2 3) 4) ; [1 2 3 4]
+```
+
+```clojure
+(vec_pop (# vec 1 2)) ;  2
+```
+
+```clojure
+(vec_get (# map 1 2 3) 1 nil) ; 2
+(vec_get (# map 1 2 3) 4 nil) ; nil
+```
+
+```clojure
+(vec_remove (# vec 1 2) 0) ;  [2]
+```
 
 # Drawing
 
