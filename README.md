@@ -68,7 +68,7 @@ now is to be a MINIMAL Lisp that can be self hosted. Specifically:
 ```
 
 ```clojure
-(# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 ())))
+(# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 nil)))
 ```
 
 Other major features that are Lispy may be added in the future.
@@ -178,7 +178,7 @@ When necessary, low level web assembly can be directly inlined
 * **(mem x:integer y)** - set 8-bit value at memory location x to value y
 * **(mem32 x:integer)** - get 32-bit value from memory location x
 * **(mem32 x:integer y)** - set 32-bit value at memory location x to value y
-* **(if x y)** - if x is true return expression y otherwise return ()
+* **(if x y)** - if x is true return expression y otherwise return nil
 * **(if x y z)** - if x is true return expression y otherwise return expression z
 * **(do ... )** - executes a list of expressions and returns the value of the last. useful putting complicated expressions in places that expect one expression.
 * **(let [x0:identifier y0:expression x1:identifier y1:expression ... ] ... )** -  bind pairs of values to identifiers. Then run a sequence of expressions that can use those values by their identifier. Returns the value of the last expression in sequence. bindings specified in let shadow those at higher scopes.
@@ -186,7 +186,7 @@ When necessary, low level web assembly can be directly inlined
 * **(recur [x0:identifier y0:expression x1:identifier y1:expression ... ] ... x )** - rebinds pairs of values to identifiers and restarts the innermost loop.
 * **(fnsig [x0 x1 .. ] y)** - gets the value of a function signature with inputs x0, x1, etc and output y
 * **(call x f y0 y1 ...)** call a function with signature x and function handle f with parameters y0, y1, ...
-* **(# function_name e1 e2 e3 ...)** recursively call a chain of functions (<fn> e1 (<fn> e2 (<fn> e3 ()))). I call this the nest operator. This function works differently the more parameters your fn takes.
+* **(# function_name e1 e2 e3 ...)** recursively call a chain of functions (<fn> e1 (<fn> e2 (<fn> e3 nil))). I call this the nest operator. This function works differently the more parameters your fn takes.
 
 ### Common Operators
 These oprators work pretty much how you'd expect if you've used C
@@ -213,7 +213,7 @@ These oprators work pretty much how you'd expect if you've used C
 * **(>> x y)** - shift x right by y bits
 
 ## Testing
-* **(deftest <test-name> x0 x1)** - executes expression x0 then x1 etc. and stops when it first encounters a value and return the value otherwise if all expressions return (), () is returned. Test names will be exported by default as `"test_"+name` when compiled in debug and removed when built with `wasp build --release`. The function `is` comes from the standard library.
+* **(deftest <test-name> x0 x1)** - executes expression x0 then x1 etc. and stops when it first encounters a value and return the value otherwise if all expressions return nil, nil is returned. Test names will be exported by default as `"test_"+name` when compiled in debug and removed when built with `wasp build --release`. The function `is` comes from the standard library.
 
 ```clojure
 (deftest addition
