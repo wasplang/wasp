@@ -172,7 +172,7 @@ When necessary, low level web assembly can be directly inlined
 * **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
 
 ## Functions
-* **(defn name "export-name" ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
+* **([pub] defn name ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
 * **(function_name ...)** - call a function with arguments
 * **(mem x:integer)** - get 8-bit value from memory location x
 * **(mem x:integer y)** - set 8-bit value at memory location x to value y
