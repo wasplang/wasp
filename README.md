@@ -87,7 +87,7 @@ Using [wasm-module](https://github.com/richardanaya/wasm-module) we can easily d
 
 (def colors (data "black" "grey" "red"))
 
-(defn ^:export main []
+(pub defn main []
   (let [window (global_getWindow)
         document (Window_get_document window)
         canvas (Document_querySelector document "#screen")
@@ -169,7 +169,7 @@ When necessary, low level web assembly can be directly inlined
 * **string** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
 * **symbol** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `":hello_world"`)
 * **bool** - a 32-bit number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
-* **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(data 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
+* **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
 
 ## Functions
 * **(defn name "export-name" ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
