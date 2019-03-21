@@ -71,24 +71,24 @@ Wasp is an extremely basic language and standard library. Everything is a linked
 Using [wasm-module](https://github.com/richardanaya/wasm-module) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
 
 ```clojure
-(extern global_getWindow [])
-(extern Window_get_document [window])
-(extern Document_querySelector [document query])
-(extern HTMLCanvasElement_getContext [element context])
-(extern CanvasRenderingContext2D_set_fillStyle [canvas color])
-(extern CanvasRenderingContext2D_fillRect [canvas x y w h])
+(extern global_get_window [])
+(extern window_get_document [window])
+(extern document_query_selector [document query])
+(extern htmlcanvas_get_context [element context])
+(extern drawing_set_fill_style [canvas color])
+(extern drawing_fill_rect [canvas x y w h])
 
 (def colors ("black" "grey" "red"))
 
 (pub defn main []
-  (let [window (global_getWindow)
-        document (Window_get_document window)
-        canvas (Document_querySelector document "#screen")
-        ctx (HTMLCanvasElement_getContext canvas "2d")]
+  (let [window (global_get_window)
+        document (window_get_document window)
+        canvas (document_query_selector document "#screen")
+        ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (CanvasRenderingContext2D_set_fillStyle ctx (mem32 (+ colors (* 4 x))))
-                       (CanvasRenderingContext2D_fillRect ctx (* x 10) (* x 10) 50 50 )
+                   (do (drawing_set_fill_style ctx (mem32 (+ colors (* 4 x))))
+                       (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))
 ```
 
