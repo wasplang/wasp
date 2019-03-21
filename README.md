@@ -100,15 +100,19 @@ Wasp is an extremely basic language and standard library.
 ```
 
 ```clojure
-(vec_get (# vec 1 2 3) 1) ;2
+(vec_get (# vec 1 2 3) 1) ; 2
 ```
 
 ```clojure
-(vec_len (# vec 1 2 3)) ;3 
+(vec_len (# vec 1 2 3)) ; 3 
 ```
 
 ```clojure
-(vec_remove (# vec 1 2) 0) ;  [2]
+(vec_remove (# vec 1 2) 0) ; [2]
+```
+
+```clojure
+(vec_concat (# vec 1 2) (# vec 3 4)) ; [ 1 2 3 4 ]
 ```
 
 # Drawing
