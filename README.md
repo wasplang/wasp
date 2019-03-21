@@ -6,7 +6,7 @@ a Lisp programming language for extremely performant and concise web assembly mo
 ```clojure
 ; main.w
 (extern console_log [message])
-(defn ^:export main []
+(pub defn main []
   (console_log "Hello World!"))
 ```
 
@@ -54,17 +54,17 @@ now is to be a MINIMAL Lisp that can be self hosted. Specifically:
 * immutable cons data structure
 
 ```clojure
-(cons 42 ()) ; returns the memory location of cons
+(cons 42 nil) ; returns the memory location of cons
 ```
 ```clojure
-(head (cons 42 ())) ; return the head value 42
+(head (cons 42 nil) ; return the head value 42
 ```
 ```clojure
-(tail (cons 42 ())) ; returns the memory location of tail
+(tail (cons 42 nil) ; returns the memory location of tail
 ```
 
 ```clojure
-(cons 1 (cons 2 (cons 3 ()))) ; returns a linked list
+(cons 1 (cons 2 (cons 3 nil)) ; returns a linked list
 ```
 
 ```clojure
@@ -106,7 +106,7 @@ See it working [here](https://wasplang.github.io/wasp/examples/canvas/index.html
 It's often important for a web assembly modules to have some sort of global data that can be changed.  For instance in a game we might have a high score.
 
 ```clojure
-(def high_score (data 0) )
+(def high_score (0) )
 
 (defn run_my_game
   ...
@@ -158,7 +158,7 @@ When necessary, low level web assembly can be directly inlined
   LOCAL_SET   1
   END )
 
-(defn ^:export main []
+(pub defn main []
   ...
   (memswap 10, 20) )
 ```
@@ -169,8 +169,8 @@ When necessary, low level web assembly can be directly inlined
 * **string** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
 * **symbol** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `":hello_world"`)
 * **bool** - a 32-bit number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
-* **()** - a 32-bit pointer to value that represents nothingness
-* **data** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(data 1 true :hey (data :more-data ())`). Use this for embedding raw data into your application memory on startup.
+* **nil** - a 32-bit pointer to value that represents nothingness
+* **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(data 1 true :hey (data :more-data ())`). Use this for embedding raw data into your application memory on startup.
 
 ## Functions
 * **(defn name "export-name" ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
