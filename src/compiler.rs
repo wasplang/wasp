@@ -854,9 +854,6 @@ impl Compiler {
             Expression::Number(x) => {
                 self.function_implementations[i].with_instructions(vec![I32_CONST, (*x).into()]);
             }
-            Expression::EmptyList => {
-                self.function_implementations[i].with_instructions(vec![I32_CONST, 0.into()]);
-            }
         }
     }
 

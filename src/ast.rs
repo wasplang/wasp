@@ -102,7 +102,6 @@ pub enum Expression {
     Comment(String),
     FunctionCall(OperationFunctionCall),
     Number(i32),
-    EmptyList,
     Let(OperationLet),
     Populate(OperationPopulate),
     Recur(OperationRecur),

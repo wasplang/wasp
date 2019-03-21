@@ -125,13 +125,6 @@ named!(external_function<CompleteStr, TopLevelOperation>,
   )
 );
 
-named!(empty_list<CompleteStr, Expression>,
-  do_parse!(
-    tag!("None") >>
-    (Expression::EmptyList)
-  )
-);
-
 named!(expression_comment<CompleteStr, Expression>,
   do_parse!(
     tag!(";") >>
@@ -265,7 +258,7 @@ named!(expression_populate<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_populate|expression_fnsig|expression_loop|expression_recur|expression_let|empty_list|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_string|expression_identifier|expression_function_call)
+    alt!(expression_populate|expression_fnsig|expression_loop|expression_recur|expression_let|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_string|expression_identifier|expression_function_call)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -448,16 +441,9 @@ named!(global_data<CompleteStr, GlobalValue>,
   )
 );
 
-named!(global_empty<CompleteStr, GlobalValue>,
-  do_parse!(
-    tag!("None") >>
-    (GlobalValue::Number(0))
-  )
-);
-
 named!(global_value<CompleteStr, GlobalValue>,
   do_parse!(
-    value: ws!(alt!(global_bool_true|global_bool_false|value_number|value_text|global_data|global_empty)) >>
+    value: ws!(alt!(global_bool_true|global_bool_false|value_number|value_text|global_data)) >>
     (value)
   )
 );

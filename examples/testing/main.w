@@ -1,6 +1,6 @@
 (extern console_log [message])
-
-(defn is [c m] (if c None m))
+(def success 0)
+(defn is [c m] (if c success m))
 
 (deftest multiplication
   (is (== 4 (* 2 2)) "2 * 2 should be 4")
