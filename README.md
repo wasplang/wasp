@@ -126,7 +126,15 @@ Wasp is an extremely basic language and standard library.
 ```
 
 ```clojure
-(get p point.x)
+(defn create_point [x y]
+  (let [ p (malloc (sizeof point))]
+         (set p point.x x)
+         (set p point.y y)
+         p))
+```
+
+```clojure
+(get (create_point 1 2) point.x) ; 1
 ```
 
 ```clojure
@@ -142,7 +150,16 @@ Wasp is an extremely basic language and standard library.
 ```
 
 ```clojure
-(get t triangle.a.x 12)
+(defn create_triangle [a b c]
+  (let [ t (malloc (sizeof triangle))]
+         (memcopy a (+ t traingle.a) (sizeof point))
+         (memcopy b (+ t traingle.b) (sizeof point))
+         (memcopy c (+ t traingle.c) (sizeof point))
+         t))
+```
+
+```clojure
+(get (create_triangle (create_point 9 2) (create_point 1 2) (create_point 1 2)) triangle.a.x) ; 9
 ```
 
 # Drawing
