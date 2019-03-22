@@ -285,78 +285,6 @@ named!(function_operations<CompleteStr, Vec<Expression>>,
   )
 );
 
-named!(wasm_op_comment<CompleteStr, WasmOperation>,
-  do_parse!(
-    tag!(";") >>
-    comment: map!(take_while!(is_comment_char),to_string) >>
-    (crate::ast::WasmOperation::Comment(comment))
-  )
-);
-
-named!(wasm_op_identifier<CompleteStr, WasmOperation>,
-  do_parse!(
-    op: token_identifier >>
-    (crate::ast::WasmOperation::Identifier(op))
-  )
-);
-
-named!(wasm_op_number<CompleteStr, WasmOperation>,
-  do_parse!(
-    op: token_number >>
-    (crate::ast::WasmOperation::Number(op))
-  )
-);
-
-named!(wasm_op<CompleteStr,WasmOperation>,
-  alt!(wasm_op_comment|wasm_op_identifier|wasm_op_number)
-);
-
-named!(wasm_ops<CompleteStr, Vec<WasmOperation>>,
-  do_parse!(
-    op: many0!(ws!(wasm_op)) >>
-    (op)
-  )
-);
-
-named!(define_wasm_function<CompleteStr, TopLevelOperation>,
-  do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
-    external_name:opt!( ws!(tag!("pub"))) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("defn-wasm"))   >>
-    many0!(ws!(token_comment)) >>
-    function_name: ws!(token_identifier) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
-    many0!(ws!(token_comment)) >>
-    params: many0!(ws!(token_data_type)) >>
-    ws!(tag!("]"))   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
-    many0!(ws!(token_comment)) >>
-    outputs: many0!(ws!(token_data_type)) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
-    many0!(ws!(token_comment)) >>
-    locals: many0!(ws!(token_data_type)) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
-    many0!(ws!(token_comment)) >>
-    children: wasm_ops >>
-    many0!(ws!(token_comment)) >>
-    tag!(")")   >>
-    (TopLevelOperation::DefineWasmFunction(WasmFunctionDefinition{name: function_name,
-    exported: external_name.is_some(),
-    params: params,
-    outputs: outputs,
-    locals: locals,
-    children: children}))
-  )
-);
-
 named!(define_function<CompleteStr, TopLevelOperation>,
   do_parse!(
     tag!("(")   >>
@@ -469,7 +397,7 @@ named!(comment<CompleteStr, TopLevelOperation>,
 
 named!(app<CompleteStr, App>,
   do_parse!(
-    op: many0!(ws!(alt!(comment|external_function|define_wasm_function|define_function|define_test_function|define_global))) >>
+    op: many0!(ws!(alt!(comment|external_function|define_function|define_test_function|define_global))) >>
     eof!() >>
     (App{children:op})
   )

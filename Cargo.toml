@@ -1,6 +1,6 @@
 [package]
 name = "wasp"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Richard Anaya"]
 edition = "2018"
 license = "MIT"

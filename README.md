@@ -135,27 +135,6 @@ Now, when wasp compiles your code, it does a few things.
 
 Please try to use non conflicting names in meantime while this is fleshed out for 0.2.0
 
-# Advanced
-When necessary, low level web assembly can be directly inlined
-```clojure
-(defn-wasm memswap [i32] [i32] ; 1 input, 1 output
-  [i32]  ; int tmp = 0;
-  ; tmp = a
-  LOCAL_GET   0
-  LOCAL_SET   2
-  ; a = b
-  LOCAL_GET   1
-  LOCAL_SET   0
-  ; b = tmp
-  LOCAL_GET   2
-  LOCAL_SET   1
-  END )
-
-(pub defn main []
-  ...
-  (memswap 10, 20) )
-```
-
 # Technical Details
 ## Types
 * **integer** - a 32-bit integer (e.g `-1`, `0`, `42`)
@@ -171,6 +150,9 @@ When necessary, low level web assembly can be directly inlined
 * **(mem x:integer y)** - set 8-bit value at memory location x to value y
 * **(mem32 x:integer)** - get 32-bit value from memory location x
 * **(mem32 x:integer y)** - set 32-bit value at memory location x to value y
+* **(mem_heap_start)** - get 32-bit value that represents the start of the heap
+* **(mem_heap_end)** - get 32-bit value that represents the end of the heap
+* **(mem_heap_end x)** - set the 32-bit value that represents the end of the heap
 * **(if x y)** - if x is true return expression y otherwise return 0
 * **(if x y z)** - if x is true return expression y otherwise return expression z
 * **(do ... )** - executes a list of expressions and returns the value of the last. useful putting complicated expressions in places that expect one expression.

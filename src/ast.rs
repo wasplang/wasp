@@ -10,7 +10,6 @@ pub enum TopLevelOperation {
     Comment(String),
     DefineGlobal(Global),
     DefineFunction(FunctionDefinition),
-    DefineWasmFunction(WasmFunctionDefinition),
     DefineTestFunction(TestFunctionDefinition),
     ExternalFunction(ExternalFunction),
 }
@@ -48,16 +47,6 @@ pub struct FunctionDefinition {
 pub struct TestFunctionDefinition {
     pub name: String,
     pub children: Vec<Expression>,
-}
-
-#[derive(Debug, Clone)]
-pub struct WasmFunctionDefinition {
-    pub name: String,
-    pub exported: bool,
-    pub params: Vec<DataType>,
-    pub outputs: Vec<DataType>,
-    pub locals: Vec<DataType>,
-    pub children: Vec<WasmOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -107,11 +96,4 @@ pub enum Expression {
     Recur(OperationRecur),
     Loop(OperationLoop),
     FnSig(OperationFnSig),
-}
-
-#[derive(Debug, Clone)]
-pub enum WasmOperation {
-    Comment(String),
-    Identifier(String),
-    Number(i32),
 }
