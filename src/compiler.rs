@@ -10,6 +10,11 @@ enum IdentifierType {
     Function,
 }
 
+enum GlobalValueType {
+    Float(f64),
+    Int(i32),
+}
+
 struct Compiler {
     wasm: wasmly::App,
     ast: crate::ast::App,
@@ -90,32 +95,44 @@ impl Compiler {
         for def in global_defs {
             self.global_names.push(def.name.clone());
             let v = self.get_global_value(&def.value);
-            self.global_values.push(v);
+            match v {
+                GlobalValueType::Float(f) => self.global_values.push(f),
+                GlobalValueType::Int(i) => self.global_values.push(i as f64),
+            }
         }
     }
 
-    fn int_to_bytes(&self, i: f64) -> Vec<u8> {
-        let mut bytes = vec![];
-        bytes.write_f64::<LittleEndian>(i).unwrap();
+    fn float_to_bytes(&self, i: f64) -> Vec<u8> {
+        let raw_bytes: [u8; 8] = unsafe { std::mem::transmute(i) };
+        let bytes: Vec<u8> = raw_bytes.to_vec();
         bytes
     }
 
-    fn create_global_data(&mut self, v: Vec<GlobalValue>) -> f64 {
+    fn int_to_bytes(&self, i: i32) -> Vec<u8> {
+        let mut bytes = vec![];
+        bytes.write_i32::<LittleEndian>(i).unwrap();
+        bytes
+    }
+
+    fn create_global_data(&mut self, v: Vec<GlobalValue>) -> i32 {
         let mut bytes = vec![];
         for i in 0..v.len() {
             let v = self.get_global_value(&v[i]);
-            let b = self.int_to_bytes(v);
+            let b = match v {
+                GlobalValueType::Float(f) => self.float_to_bytes(f),
+                GlobalValueType::Int(i) => self.int_to_bytes(i),
+            };
             bytes.extend_from_slice(&b);
         }
         self.create_data(bytes)
     }
 
-    fn get_global_value(&mut self, v: &GlobalValue) -> f64 {
+    fn get_global_value(&mut self, v: &GlobalValue) -> GlobalValueType {
         match v {
-            GlobalValue::Number(t) => *t,
-            GlobalValue::Text(t) => self.get_or_create_text_data(&t),
-            GlobalValue::Data(t) => self.create_global_data(t.clone()),
-            GlobalValue::Identifier(t) => self.resolve_identifier(t).0,
+            GlobalValue::Number(t) => GlobalValueType::Float(*t),
+            GlobalValue::Text(t) => GlobalValueType::Int(self.get_or_create_text_data(&t)),
+            GlobalValue::Data(t) => GlobalValueType::Int(self.create_global_data(t.clone())),
+            GlobalValue::Identifier(t) => GlobalValueType::Float(self.resolve_identifier(t).0),
         }
     }
 
@@ -175,14 +192,14 @@ impl Compiler {
             .add_global(wasmly::Global::new(final_heap_pos as i32, true));
     }
 
-    fn get_or_create_text_data(&mut self, str: &str) -> f64 {
+    fn get_or_create_text_data(&mut self, str: &str) -> i32 {
         let mut bytes: Vec<u8> = str.as_bytes().into();
         bytes.push(0);
         self.create_data(bytes)
     }
 
-    fn create_data(&mut self, bytes: Vec<u8>) -> f64 {
-        let pos = self.heap_position;
+    fn create_data(&mut self, bytes: Vec<u8>) -> i32 {
+        let pos = self.heap_position as i32;
         let size = bytes.len();
         self.wasm.add_data(Data::new(pos as i32, bytes));
         let mut final_heap_pos = self.heap_position + (size as f64);
@@ -289,20 +306,21 @@ impl Compiler {
                 let t = self
                     .wasm
                     .add_type(FunctionType::new(x.inputs.clone(), x.output.clone()));
-                self.function_implementations[i].with_instructions(vec![F64_CONST, (t as f64).into()]);
+                self.function_implementations[i]
+                    .with_instructions(vec![F64_CONST, (t as f64).into()]);
             }
             Expression::Loop(x) => {
                 self.recur_depth = 0;
                 for j in 0..x.bindings.len() {
                     let binding = &x.bindings[j];
                     self.process_expression(i, &binding.1);
-                    self.function_implementations[i].with_local(DataType::I32);
+                    self.function_implementations[i].with_local(DataType::F64);
                     self.function_implementations[i]
                         .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into()]);
                     self.local_names.push((&binding.0).to_string());
                 }
                 if !x.expressions.is_empty() {
-                    self.function_implementations[i].with_instructions(vec![LOOP, I32]);
+                    self.function_implementations[i].with_instructions(vec![LOOP, F64]);
                     for k in 0..x.expressions.len() {
                         self.process_expression(i, &x.expressions[k]);
                         if k != x.expressions.len() - 1 {
@@ -376,9 +394,8 @@ impl Compiler {
                                 self.process_expression(i, &x.params[k]);
                             }
                             self.process_expression(i, &x.params[1]);
-                            self.function_implementations[i].with_instructions(vec![
-                                I32_TRUNC_S_F64,
-                            ]);
+                            self.function_implementations[i]
+                                .with_instructions(vec![I32_TRUNC_S_F64]);
                             let t = self.wasm.add_type(FunctionType::new(
                                 sig.inputs.clone(),
                                 sig.output.clone(),
@@ -403,11 +420,13 @@ impl Compiler {
                     if x.params.len() == 2 {
                         self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![
-                            F64_CONST, 0.0.into(),
+                            F64_CONST,
+                            0.0.into(),
                             F64_EQ,
-                            I32_CONST, 0.into(),
+                            I32_CONST,
+                            0.into(),
                             I32_EQ,
-                            ]);
+                        ]);
                         self.function_implementations[i].with_instructions(vec![IF, F64]);
                         self.process_expression(i, &x.params[1]);
                         self.function_implementations[i].with_instructions(vec![
@@ -419,11 +438,13 @@ impl Compiler {
                     } else if x.params.len() == 3 {
                         self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![
-                            F64_CONST, 0.0.into(),
+                            F64_CONST,
+                            0.0.into(),
                             F64_EQ,
-                            I32_CONST, 0.into(),
+                            I32_CONST,
+                            0.into(),
                             I32_EQ,
-                            ]);
+                        ]);
                         self.function_implementations[i].with_instructions(vec![IF, F64]);
                         self.process_expression(i, &x.params[1]);
                         self.function_implementations[i].with_instructions(vec![ELSE]);
@@ -435,9 +456,7 @@ impl Compiler {
                 } else if &x.function_name == "mem" {
                     if x.params.len() == 1 {
                         self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![
-                            I32_TRUNC_S_F64
-                        ]);
+                        self.function_implementations[i].with_instructions(vec![I32_TRUNC_S_F64]);
                         self.function_implementations[i].with_instructions(vec![
                             I32_LOAD8_U,
                             0.into(),
@@ -447,9 +466,8 @@ impl Compiler {
                     } else if x.params.len() == 2 {
                         for k in 0..x.params.len() {
                             self.process_expression(i, &x.params[k]);
-                            self.function_implementations[i].with_instructions(vec![
-                                I32_TRUNC_S_F64
-                            ]);
+                            self.function_implementations[i]
+                                .with_instructions(vec![I32_TRUNC_S_F64]);
                         }
                         self.function_implementations[i].with_instructions(vec![
                             I32_STORE8,
@@ -457,7 +475,7 @@ impl Compiler {
                             0.into(),
                         ]);
                         self.function_implementations[i]
-                            .with_instructions(vec![I32_CONST, 0.into()]);
+                            .with_instructions(vec![F64_CONST, 0.0.into()]);
                     } else {
                         panic!("invalid number params for mem")
                     }
@@ -480,22 +498,19 @@ impl Compiler {
                         ]);
                     } else if x.params.len() == 1 {
                         self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![
-                            I32_TRUNC_S_F64
-                        ]);
+                        self.function_implementations[i].with_instructions(vec![I32_TRUNC_S_F64]);
                         self.function_implementations[i].with_instructions(vec![
                             GLOBAL_SET,
                             1.into(),
-                            I32_CONST, 0.into()
+                            I32_CONST,
+                            0.into(),
                         ]);
                     } else {
                         panic!("invalid number params for mem_heap_start")
                     }
                 } else if &x.function_name == "mem32" {
                     if x.params.len() == 1 {
-                        for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k])
-                        }
+                        self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![
                             I32_TRUNC_S_F64,
                             I32_LOAD,
@@ -506,9 +521,8 @@ impl Compiler {
                     } else if x.params.len() == 2 {
                         for k in 0..x.params.len() {
                             self.process_expression(i, &x.params[k]);
-                            self.function_implementations[i].with_instructions(vec![
-                                I32_TRUNC_S_F64
-                            ]);
+                            self.function_implementations[i]
+                                .with_instructions(vec![I32_TRUNC_S_F64]);
                         }
                         self.function_implementations[i].with_instructions(vec![
                             I32_STORE,
@@ -516,7 +530,30 @@ impl Compiler {
                             (0 as i32).into(),
                         ]);
                         self.function_implementations[i]
-                            .with_instructions(vec![I32_CONST, 0.into()]);
+                            .with_instructions(vec![F64_CONST, 0.0.into()]);
+                    } else {
+                        panic!("invalid number params for mem32")
+                    }
+                } else if &x.function_name == "memf64" {
+                    if x.params.len() == 1 {
+                        self.process_expression(i, &x.params[0]);
+                        self.function_implementations[i].with_instructions(vec![
+                            I32_TRUNC_S_F64,
+                            F64_LOAD,
+                            (0 as i32).into(),
+                            (0 as i32).into(),
+                        ]);
+                    } else if x.params.len() == 2 {
+                        self.process_expression(i, &x.params[0]);
+                        self.function_implementations[i].with_instructions(vec![I32_TRUNC_S_F64]);
+                        self.process_expression(i, &x.params[1]);
+                        self.function_implementations[i].with_instructions(vec![
+                            F64_STORE,
+                            (0 as i32).into(),
+                            (0 as i32).into(),
+                        ]);
+                        self.function_implementations[i]
+                            .with_instructions(vec![F64_CONST, 0.0.into()]);
                     } else {
                         panic!("invalid number params for mem32")
                     }
@@ -559,13 +596,9 @@ impl Compiler {
                         );
                     }
                     self.process_expression(i, &x.params[0]);
-                    self.function_implementations[i].with_instructions(vec![
-                        I64_TRUNC_S_F64
-                        ]);
+                    self.function_implementations[i].with_instructions(vec![I64_TRUNC_S_F64]);
                     self.process_expression(i, &x.params[1]);
-                    self.function_implementations[i].with_instructions(vec![
-                        I64_TRUNC_S_F64
-                        ]);
+                    self.function_implementations[i].with_instructions(vec![I64_TRUNC_S_F64]);
                     let mut f = match (&x.function_name).as_str() {
                         "&" => vec![I64_AND],
                         "|" => vec![I64_OR],
@@ -592,7 +625,8 @@ impl Compiler {
                         self.process_expression(i, &x.params[p]);
 
                         if &x.function_name == "%" {
-                            self.function_implementations[i].with_instructions(vec![I64_TRUNC_S_F64]);
+                            self.function_implementations[i]
+                                .with_instructions(vec![I64_TRUNC_S_F64]);
                         }
                         if p != 0 {
                             let f = match (&x.function_name).as_str() {
@@ -615,7 +649,12 @@ impl Compiler {
                     }
 
                     self.process_expression(i, &x.params[0]);
-                    self.function_implementations[i].with_instructions(vec![F64_CONST,0.0.into(),F64_EQ,F64_CONVERT_S_I32]);
+                    self.function_implementations[i].with_instructions(vec![
+                        F64_CONST,
+                        0.0.into(),
+                        F64_EQ,
+                        F64_CONVERT_S_I32,
+                    ]);
                 } else if &x.function_name == "~" {
                     if x.params.len() != 1 {
                         panic!(
@@ -630,7 +669,7 @@ impl Compiler {
                         I64_CONST,
                         (-1 as i32).into(),
                         I64_XOR,
-                        F64_CONVERT_S_I64
+                        F64_CONVERT_S_I64,
                     ]);
                 } else if &x.function_name == "and" {
                     if x.params.len() != 2 {
@@ -654,7 +693,7 @@ impl Compiler {
                         0.into(),
                         I64_NE,
                         I32_AND,
-                        F64_CONVERT_S_I32
+                        F64_CONVERT_S_I32,
                     ]);
                 } else if &x.function_name == "or" {
                     if x.params.len() != 2 {
@@ -665,9 +704,7 @@ impl Compiler {
                     }
 
                     self.process_expression(i, &x.params[0]);
-                    self.function_implementations[i].with_instructions(vec![
-                        I64_TRUNC_S_F64,
-                    ]);
+                    self.function_implementations[i].with_instructions(vec![I64_TRUNC_S_F64]);
                     self.process_expression(i, &x.params[1]);
                     self.function_implementations[i].with_instructions(vec![
                         I64_TRUNC_S_F64,
@@ -675,7 +712,7 @@ impl Compiler {
                         I64_CONST,
                         0.into(),
                         I64_NE,
-                        F64_CONVERT_S_I32
+                        F64_CONVERT_S_I32,
                     ]);
                 } else {
                     let (function_handle, _) = self.resolve_identifier(&x.function_name);
@@ -688,7 +725,8 @@ impl Compiler {
             }
             Expression::TextLiteral(x) => {
                 let pos = self.get_or_create_text_data(&x);
-                self.function_implementations[i].with_instructions(vec![F64_CONST, (pos as f64).into()]);
+                self.function_implementations[i]
+                    .with_instructions(vec![F64_CONST, (pos as f64).into()]);
             }
             Expression::Identifier(x) => {
                 let val = self.resolve_identifier(&x);
@@ -734,13 +772,19 @@ impl Compiler {
                 for j in 0..f.children.len() {
                     self.process_expression(i, &f.children[j].clone());
                     self.function_implementations[i].with_instructions(vec![
-                        LOCAL_SET, (0 as i32).into(),
-                        LOCAL_GET, (0 as i32).into(),
-                        F64_CONST, 0.0.into(),
+                        LOCAL_SET,
+                        (0 as i32).into(),
+                        LOCAL_GET,
+                        (0 as i32).into(),
+                        F64_CONST,
+                        0.0.into(),
                         F64_NE,
-                        IF, EMPTY,
-                        LOCAL_GET, (0 as i32).into(),
-                        BR, (1 as i32).into(),
+                        IF,
+                        EMPTY,
+                        LOCAL_GET,
+                        (0 as i32).into(),
+                        BR,
+                        (1 as i32).into(),
                         END,
                     ]);
                 }

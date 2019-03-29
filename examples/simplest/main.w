@@ -1,3 +1,1 @@
-(pub defn main [msg]
-  (& 1 0)
-  )
+(pub defn main [] 42)

@@ -90,7 +90,6 @@ named!(
     )
 );
 
-
 named!(
     base_float<CompleteStr,String>,
     do_parse!(
@@ -108,7 +107,6 @@ named!(
             (num.to_owned())
     )
 );
-
 
 named!(
     negative_number<CompleteStr,f64>,

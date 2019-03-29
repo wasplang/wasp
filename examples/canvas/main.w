@@ -2,8 +2,8 @@
 (extern window_get_document [window])
 (extern document_query_selector [document query])
 (extern htmlcanvas_get_context [element context])
-(extern drawing_set_fill_style [canvas color])
-(extern drawing_fill_rect [canvas x y w h])
+(extern canvas_set_fill_style [canvas color])
+(extern canvas_fill_rect [canvas x y w h])
 
 (def colors ("black" "grey" "red"))
 
@@ -14,6 +14,6 @@
         ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (drawing_set_fill_style ctx (mem32 (+ colors (* 4 x))))
-                       (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
+                   (do (canvas_set_fill_style ctx (mem32 (+ colors (* 4 x))))
+                       (canvas_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))

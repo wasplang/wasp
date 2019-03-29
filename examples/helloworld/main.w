@@ -1,3 +1,3 @@
 (extern console_log [message])
-(pub defn main [msg]
+(pub defn main []
   (console_log "hello world!"))
