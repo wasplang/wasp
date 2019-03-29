@@ -90,25 +90,45 @@ named!(
     )
 );
 
+
 named!(
-    negative_number<CompleteStr,i32>,
+    base_float<CompleteStr,String>,
+    do_parse!(
+            num: map!(take_while1!(is_digit), to_string) >>
+            tag!(".") >>
+            den: map!(take_while1!(is_digit), to_string) >>
+            (format!("{}.{}",num,den).to_owned())
+    )
+);
+
+named!(
+    base_int<CompleteStr,String>,
+    do_parse!(
+            num: map!(take_while1!(is_digit), to_string) >>
+            (num.to_owned())
+    )
+);
+
+
+named!(
+    negative_number<CompleteStr,f64>,
     do_parse!(
         tag!("-")
-            >> num: map!(take_while1!(is_digit), to_string)
-            >> (-num.parse::<i32>().unwrap())
+            >> num: alt!(base_float|base_int)
+            >> (-num.parse::<f64>().unwrap())
     )
 );
 
 named!(
-    positive_number<CompleteStr,i32>,
+    positive_number<CompleteStr,f64>,
     do_parse!(
-         num: map!(take_while1!(is_digit), to_string)
-            >> (num.parse::<i32>().unwrap())
+         num: alt!(base_float|base_int)
+            >> (num.parse::<f64>().unwrap())
     )
 );
 
 named!(
-    token_number<CompleteStr,i32>,
+    token_number<CompleteStr,f64>,
     alt!(positive_number|negative_number)
 );
 
@@ -157,14 +177,14 @@ named!(expression_number<CompleteStr, Expression>,
 named!(boolean_true<CompleteStr, Expression>,
     do_parse!(
       tag!("true") >>
-      (Expression::Number(1))
+      (Expression::Number(1.0))
     )
 );
 
 named!(boolean_false<CompleteStr, Expression>,
     do_parse!(
       tag!("false") >>
-      (Expression::Number(0))
+      (Expression::Number(0.0))
     )
 );
 
@@ -342,14 +362,14 @@ named!(value_text<CompleteStr, GlobalValue>,
 named!(global_bool_true<CompleteStr, GlobalValue>,
   do_parse!(
     tag!("true")  >>
-    (GlobalValue::Number(1))
+    (GlobalValue::Number(1.0))
   )
 );
 
 named!(global_bool_false<CompleteStr, GlobalValue>,
   do_parse!(
     tag!("false")  >>
-    (GlobalValue::Number(0))
+    (GlobalValue::Number(0.0))
   )
 );
 

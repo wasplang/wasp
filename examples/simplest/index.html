@@ -1,0 +1,10 @@
+<script>
+  fetch("simplest.wasm")
+    .then(response => response.arrayBuffer())
+    .then(bytes => {
+      return WebAssembly.instantiate(bytes);
+    })
+    .then(results => {
+      console.log(results.instance.exports.main());
+    });
+</script>

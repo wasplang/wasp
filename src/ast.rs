@@ -22,7 +22,7 @@ pub struct Global {
 
 #[derive(Debug, Clone)]
 pub enum GlobalValue {
-    Number(i32),
+    Number(f64),
     Text(String),
     Data(Vec<GlobalValue>),
     Identifier(String),
@@ -90,7 +90,7 @@ pub enum Expression {
     Identifier(String),
     Comment(String),
     FunctionCall(OperationFunctionCall),
-    Number(i32),
+    Number(f64),
     Let(OperationLet),
     Populate(OperationPopulate),
     Recur(OperationRecur),
