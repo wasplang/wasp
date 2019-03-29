@@ -133,26 +133,30 @@ Now, when wasp compiles your code, it does a few things.
 * all files in the current directory and sub directories not in `vendor` are loaded
 * then everything is compiled in order
 
-Please try to use non conflicting names in meantime while this is fleshed out for 0.2.0
+Please try to use non conflicting names in meantime while this is fleshed out.
 
 # Technical Details
 ## Types
-* **integer** - a 32-bit integer (e.g `-1`, `0`, `42`)
-* **string** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
-* **symbol** - a 32-bit pointer to a location in memory of the start of of a c-string (e.g. `":hello_world"`)
-* **bool** - a 32-bit number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
-* **(...)** - a global only type this is a a 32-bit pointer to sequence of 32-bit values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
+* **number** - a 64 bit float
+* **string** - a number to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
+* **symbol** - a number to a location in memory of the start of of a c-string (e.g. `":hello_world"`)
+* **bool** - a number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
+* **(...)** - a global only type this is a a number pointer to sequence of  values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
+ Note that numbers in this sequence are 64-bit float, but non-numbers are 32-bit integers.
 
 ## Functions
 * **([pub] defn name ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
 * **(function_name ...)** - call a function with arguments
 * **(mem x:integer)** - get 8-bit value from memory location x
 * **(mem x:integer y)** - set 8-bit value at memory location x to value y
-* **(mem32 x:integer)** - get 32-bit value from memory location x
-* **(mem32 x:integer y)** - set 32-bit value at memory location x to value y
-* **(mem_heap_start)** - get 32-bit value that represents the start of the heap
-* **(mem_heap_end)** - get 32-bit value that represents the end of the heap
-* **(mem_heap_end x)** - set the 32-bit value that represents the end of the heap
+* **(mem32 x:integer)** - get 32-bit integer value from memory location x
+* **(mem32 x:integer y)** - set 32-bit integer value at memory location x to value y
+* **(memf64 x:integer)** - get 64-bit float value from memory location x
+* **(memf64 x:integer y)** - set 64-bit float value at memory location x to value y
+
+* **(mem_heap_start)** - get number that represents the start of the heap
+* **(mem_heap_end)** - get number that represents the end of the heap
+* **(mem_heap_end x)** - set number value that represents the end of the heap
 * **(if x y)** - if x is true return expression y otherwise return 0
 * **(if x y z)** - if x is true return expression y otherwise return expression z
 * **(do ... )** - executes a list of expressions and returns the value of the last. useful putting complicated expressions in places that expect one expression.

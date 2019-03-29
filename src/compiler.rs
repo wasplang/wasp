@@ -237,7 +237,7 @@ impl Compiler {
         match e {
             Expression::Populate(x) => {
                 let val = self.resolve_identifier(&x.name);
-                self.function_implementations[i].with_local(DataType::I32);
+                self.function_implementations[i].with_local(DataType::F64);
                 self.local_names.push("".to_string());
                 let loc_storage = (self.local_names.len() - 1) as i32;
                 match val.1 {
@@ -266,22 +266,17 @@ impl Compiler {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    I32_CONST,
-                                    0.into(),
-                                    CALL,
-                                    val.0.into(),
-                                    LOCAL_SET,
-                                    loc_storage.into(),
+                                    F64_CONST, 0.0.into(),
+                                    CALL, (val.0 as i32).into(),
+                                    LOCAL_SET, (loc_storage as i32).into(),
                                 ]);
                             } else if j == expr.len() - 1 {
                                 for k in 0..expr[j].len() {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET,
-                                    loc_storage.into(),
-                                    CALL,
-                                    val.0.into(),
+                                    LOCAL_GET, (loc_storage as i32).into(),
+                                    CALL, (val.0 as i32).into(),
                                 ]);
                                 break;
                             } else {
@@ -289,12 +284,9 @@ impl Compiler {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET,
-                                    loc_storage.into(),
-                                    CALL,
-                                    val.0.into(),
-                                    LOCAL_SET,
-                                    loc_storage.into(),
+                                    LOCAL_GET, (loc_storage as i32).into(),
+                                    CALL, (val.0 as i32).into(),
+                                    LOCAL_SET, (loc_storage as i32).into(),
                                 ]);
                             }
                         }
