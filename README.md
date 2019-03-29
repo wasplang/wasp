@@ -68,7 +68,7 @@ Wasp is an extremely basic language and standard library. Everything is a linked
 
 # Drawing
 
-Using [wasm-module](https://github.com/richardanaya/wasm-module) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
+Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
 
 ```clojure
 (extern global_get_window [])
