@@ -377,7 +377,7 @@ impl Compiler {
                             }
                             self.process_expression(i, &x.params[1]);
                             self.function_implementations[i].with_instructions(vec![
-                                F64_CONVERT_S_I32,
+                                I32_TRUNC_S_F64,
                             ]);
                             let t = self.wasm.add_type(FunctionType::new(
                                 sig.inputs.clone(),
@@ -390,7 +390,7 @@ impl Compiler {
                             ]);
                             if sig.output.is_none() {
                                 self.function_implementations[i]
-                                    .with_instructions(vec![I32_CONST, 0.into()]);
+                                    .with_instructions(vec![F64_CONST, 0.0.into()]);
                             }
                         } else {
                             panic!("call must begin with a function signature not an expression")
