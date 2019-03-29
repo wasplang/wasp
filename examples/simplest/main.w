@@ -1,2 +1,3 @@
 (pub defn main [msg]
-  msg)
+  (& 1 0)
+  )

@@ -289,7 +289,7 @@ impl Compiler {
                 let t = self
                     .wasm
                     .add_type(FunctionType::new(x.inputs.clone(), x.output.clone()));
-                self.function_implementations[i].with_instructions(vec![I32_CONST, t.into()]);
+                self.function_implementations[i].with_instructions(vec![F64_CONST, (t as f64).into()]);
             }
             Expression::Loop(x) => {
                 self.recur_depth = 0;
@@ -326,14 +326,14 @@ impl Compiler {
                         IdentifierType::Local => {
                             self.process_expression(i, &binding.1);
                             self.function_implementations[i]
-                                .with_instructions(vec![LOCAL_SET, val.0.into()]);
+                                .with_instructions(vec![LOCAL_SET, (val.0 as i32).into()]);
                         }
                         _ => panic!("cannot recur by rebinding a non-local identifier"),
                     }
                 }
                 self.function_implementations[i].with_instructions(vec![
-                    I32_CONST,
-                    0.into(),
+                    F64_CONST,
+                    0.0.into(),
                     BR,
                     self.recur_depth.into(),
                 ]);
@@ -342,7 +342,7 @@ impl Compiler {
                 for j in 0..x.bindings.len() {
                     let binding = &x.bindings[j];
                     self.process_expression(i, &binding.1);
-                    self.function_implementations[i].with_local(DataType::I32);
+                    self.function_implementations[i].with_local(DataType::F64);
                     self.function_implementations[i]
                         .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into()]);
                     self.local_names.push((&binding.0).to_string());
@@ -376,6 +376,9 @@ impl Compiler {
                                 self.process_expression(i, &x.params[k]);
                             }
                             self.process_expression(i, &x.params[1]);
+                            self.function_implementations[i].with_instructions(vec![
+                                F64_CONVERT_S_I32,
+                            ]);
                             let t = self.wasm.add_type(FunctionType::new(
                                 sig.inputs.clone(),
                                 sig.output.clone(),
@@ -431,17 +434,22 @@ impl Compiler {
                     }
                 } else if &x.function_name == "mem" {
                     if x.params.len() == 1 {
-                        for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k])
-                        }
+                        self.process_expression(i, &x.params[0]);
+                        self.function_implementations[i].with_instructions(vec![
+                            I32_TRUNC_S_F64
+                        ]);
                         self.function_implementations[i].with_instructions(vec![
                             I32_LOAD8_U,
                             0.into(),
                             0.into(),
+                            F64_CONVERT_S_I32,
                         ]);
                     } else if x.params.len() == 2 {
                         for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k])
+                            self.process_expression(i, &x.params[k]);
+                            self.function_implementations[i].with_instructions(vec![
+                                I32_TRUNC_S_F64
+                            ]);
                         }
                         self.function_implementations[i].with_instructions(vec![
                             I32_STORE8,
@@ -458,6 +466,7 @@ impl Compiler {
                         self.function_implementations[i].with_instructions(vec![
                             GLOBAL_GET,
                             0.into(),
+                            F64_CONVERT_S_I32,
                         ]);
                     } else {
                         panic!("invalid number params for mem_heap_start")
@@ -467,11 +476,13 @@ impl Compiler {
                         self.function_implementations[i].with_instructions(vec![
                             GLOBAL_GET,
                             1.into(),
+                            F64_CONVERT_S_I32,
                         ]);
                     } else if x.params.len() == 1 {
-                        for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k])
-                        }
+                        self.process_expression(i, &x.params[0]);
+                        self.function_implementations[i].with_instructions(vec![
+                            I32_TRUNC_S_F64
+                        ]);
                         self.function_implementations[i].with_instructions(vec![
                             GLOBAL_SET,
                             1.into(),
@@ -486,23 +497,28 @@ impl Compiler {
                             self.process_expression(i, &x.params[k])
                         }
                         self.function_implementations[i].with_instructions(vec![
+                            I32_TRUNC_S_F64,
                             I32_LOAD,
-                            0.into(),
-                            0.into(),
+                            (0 as i32).into(),
+                            (0 as i32).into(),
+                            F64_CONVERT_S_I32,
                         ]);
                     } else if x.params.len() == 2 {
                         for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k])
+                            self.process_expression(i, &x.params[k]);
+                            self.function_implementations[i].with_instructions(vec![
+                                I32_TRUNC_S_F64
+                            ]);
                         }
                         self.function_implementations[i].with_instructions(vec![
                             I32_STORE,
-                            0.into(),
-                            0.into(),
+                            (0 as i32).into(),
+                            (0 as i32).into(),
                         ]);
                         self.function_implementations[i]
                             .with_instructions(vec![I32_CONST, 0.into()]);
                     } else {
-                        panic!("invalid number params for mem")
+                        panic!("invalid number params for mem32")
                     }
                 } else if &x.function_name == "=="
                     || &x.function_name == "!="
@@ -510,11 +526,6 @@ impl Compiler {
                     || &x.function_name == ">="
                     || &x.function_name == "<"
                     || &x.function_name == ">"
-                    || &x.function_name == "&"
-                    || &x.function_name == "|"
-                    || &x.function_name == "^"
-                    || &x.function_name == "<<"
-                    || &x.function_name == ">>"
                 {
                     if x.params.len() != 2 {
                         panic!(
@@ -531,14 +542,39 @@ impl Compiler {
                         ">=" => vec![F64_GE],
                         "<" => vec![F64_LT],
                         ">" => vec![F64_GT],
-                        /*"&" => vec![I32_AND],
-                        "|" => vec![I32_OR],
-                        "^" => vec![I32_XOR],
-                        "<<" => vec![I32_SHL],
-                        ">>" => vec![I32_SHR_S],*/
                         _ => panic!("unexpected operator"),
                     };
                     f.extend(vec![F64_CONVERT_S_I32]);
+                    self.function_implementations[i].with_instructions(f);
+                } else if &x.function_name == "&"
+                    || &x.function_name == "|"
+                    || &x.function_name == "^"
+                    || &x.function_name == "<<"
+                    || &x.function_name == ">>"
+                {
+                    if x.params.len() != 2 {
+                        panic!(
+                            "operator {} expected 2 parameters",
+                            (&x.function_name).as_str()
+                        );
+                    }
+                    self.process_expression(i, &x.params[0]);
+                    self.function_implementations[i].with_instructions(vec![
+                        I64_TRUNC_S_F64
+                        ]);
+                    self.process_expression(i, &x.params[1]);
+                    self.function_implementations[i].with_instructions(vec![
+                        I64_TRUNC_S_F64
+                        ]);
+                    let mut f = match (&x.function_name).as_str() {
+                        "&" => vec![I64_AND],
+                        "|" => vec![I64_OR],
+                        "^" => vec![I64_XOR],
+                        "<<" => vec![I64_SHL],
+                        ">>" => vec![I64_SHR_S],
+                        _ => panic!("unexpected operator"),
+                    };
+                    f.extend(vec![F64_CONVERT_S_I64]);
                     self.function_implementations[i].with_instructions(f);
                 } else if &x.function_name == "+"
                     || &x.function_name == "-"
