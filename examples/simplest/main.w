@@ -1,2 +1,2 @@
 (pub defn main [msg]
-  42)
+  msg)

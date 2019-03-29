@@ -399,17 +399,29 @@ impl Compiler {
                     self.recur_depth += 1;
                     if x.params.len() == 2 {
                         self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![IF, I32]);
+                        self.function_implementations[i].with_instructions(vec![
+                            F64_CONST, 0.0.into(),
+                            F64_EQ,
+                            I32_CONST, 0.into(),
+                            I32_EQ,
+                            ]);
+                        self.function_implementations[i].with_instructions(vec![IF, F64]);
                         self.process_expression(i, &x.params[1]);
                         self.function_implementations[i].with_instructions(vec![
                             ELSE,
-                            I32_CONST,
-                            0.into(),
+                            F64_CONST,
+                            0.0.into(),
                             END,
                         ]);
                     } else if x.params.len() == 3 {
                         self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![IF, I32]);
+                        self.function_implementations[i].with_instructions(vec![
+                            F64_CONST, 0.0.into(),
+                            F64_EQ,
+                            I32_CONST, 0.into(),
+                            I32_EQ,
+                            ]);
+                        self.function_implementations[i].with_instructions(vec![IF, F64]);
                         self.process_expression(i, &x.params[1]);
                         self.function_implementations[i].with_instructions(vec![ELSE]);
                         self.process_expression(i, &x.params[2]);
@@ -647,15 +659,15 @@ impl Compiler {
                 match val.1 {
                     IdentifierType::Global => {
                         self.function_implementations[i]
-                            .with_instructions(vec![I64_CONST, val.0.into()]);
+                            .with_instructions(vec![F64_CONST, val.0.into()]);
                     }
                     IdentifierType::Local => {
                         self.function_implementations[i]
-                            .with_instructions(vec![LOCAL_GET, val.0.into()]);
+                            .with_instructions(vec![LOCAL_GET, (val.0 as i32).into()]);
                     }
                     IdentifierType::Function => {
                         self.function_implementations[i]
-                            .with_instructions(vec![I32_CONST, val.0.into()]);
+                            .with_instructions(vec![F64_CONST, val.0.into()]);
                     }
                 }
             }
