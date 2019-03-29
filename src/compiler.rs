@@ -149,7 +149,7 @@ impl Compiler {
             {
                 let mut function = Function::new();
                 function.with_name(&format!("test_{}", function_def.name));
-                function.with_output(DataType::I32);
+                function.with_output(DataType::F64);
                 self.function_implementations.push(function);
             }
         }
@@ -692,31 +692,25 @@ impl Compiler {
                 //end the function
                 self.function_implementations[i].with_instructions(vec![END]);
             } else if let TopLevelOperation::DefineTestFunction(f) = self.function_defs[i].clone() {
-                self.function_implementations[i].with_local(DataType::I32);
+                self.function_implementations[i].with_local(DataType::F64);
                 self.local_names = vec![("").to_string()];
-                self.function_implementations[i].with_instructions(vec![BLOCK, I32]);
+                self.function_implementations[i].with_instructions(vec![BLOCK, F64]);
                 for j in 0..f.children.len() {
                     self.process_expression(i, &f.children[j].clone());
                     self.function_implementations[i].with_instructions(vec![
-                        LOCAL_SET,
-                        0.into(),
-                        LOCAL_GET,
-                        0.into(),
-                        I32_CONST,
-                        0.into(),
-                        I32_NE,
-                        IF,
-                        EMPTY,
-                        LOCAL_GET,
-                        0.into(),
-                        BR,
-                        1.into(),
+                        LOCAL_SET, (0 as i32).into(),
+                        LOCAL_GET, (0 as i32).into(),
+                        F64_CONST, 0.0.into(),
+                        F64_NE,
+                        IF, EMPTY,
+                        LOCAL_GET, (0 as i32).into(),
+                        BR, (1 as i32).into(),
                         END,
                     ]);
                 }
                 self.function_implementations[i].with_instructions(vec![
-                    I32_CONST,
-                    0.into(),
+                    F64_CONST,
+                    0.0.into(),
                     END,
                     END,
                 ]);
