@@ -137,12 +137,13 @@ Please try to use non conflicting names in meantime while this is fleshed out.
 
 # Technical Details
 ## Types
+It's easiest to think that everything is a `f64` number in wasp.
+
 * **number** - a 64 bit float
 * **string** - a number to a location in memory of the start of of a c-string (e.g. `"hello world!"`)
 * **symbol** - a number to a location in memory of the start of of a c-string (e.g. `:hello_world`)
 * **bool** - a number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
 * **(...)** - a global only type this is a a number pointer to sequence of  values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
- Note that numbers in this sequence are 64-bit float, but non-numbers are 32-bit integers.
 
 ## Globals
 * **SIZE_NUM** - the length of a number in bytes (8). This is the only global variable in wasp to cut down in magic numbers floating around in code.
