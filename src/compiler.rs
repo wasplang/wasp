@@ -1,5 +1,4 @@
 use crate::ast::*;
-use byteorder::{LittleEndian, WriteBytesExt};
 use failure::Error;
 use wasmly::WebAssembly::*;
 use wasmly::*;
@@ -8,11 +7,6 @@ enum IdentifierType {
     Global,
     Local,
     Function,
-}
-
-enum GlobalValueType {
-    Float(f64),
-    Int(i32),
 }
 
 struct Compiler {
@@ -95,10 +89,7 @@ impl Compiler {
         for def in global_defs {
             self.global_names.push(def.name.clone());
             let v = self.get_global_value(&def.value);
-            match v {
-                GlobalValueType::Float(f) => self.global_values.push(f),
-                GlobalValueType::Int(i) => self.global_values.push(i as f64),
-            }
+            self.global_values.push(v);
         }
     }
 
@@ -108,31 +99,22 @@ impl Compiler {
         bytes
     }
 
-    fn int_to_bytes(&self, i: i32) -> Vec<u8> {
-        let mut bytes = vec![];
-        bytes.write_i32::<LittleEndian>(i).unwrap();
-        bytes
-    }
-
-    fn create_global_data(&mut self, v: Vec<GlobalValue>) -> i32 {
+    fn create_global_data(&mut self, v: Vec<GlobalValue>) -> f64 {
         let mut bytes = vec![];
         for i in 0..v.len() {
             let v = self.get_global_value(&v[i]);
-            let b = match v {
-                GlobalValueType::Float(f) => self.float_to_bytes(f),
-                GlobalValueType::Int(i) => self.int_to_bytes(i),
-            };
+            let b = self.float_to_bytes(v);
             bytes.extend_from_slice(&b);
         }
         self.create_data(bytes)
     }
 
-    fn get_global_value(&mut self, v: &GlobalValue) -> GlobalValueType {
+    fn get_global_value(&mut self, v: &GlobalValue) -> f64 {
         match v {
-            GlobalValue::Number(t) => GlobalValueType::Float(*t),
-            GlobalValue::Text(t) => GlobalValueType::Int(self.get_or_create_text_data(&t)),
-            GlobalValue::Data(t) => GlobalValueType::Int(self.create_global_data(t.clone())),
-            GlobalValue::Identifier(t) => GlobalValueType::Float(self.resolve_identifier(t).0),
+            GlobalValue::Number(t) => *t,
+            GlobalValue::Text(t) => self.get_or_create_text_data(&t),
+            GlobalValue::Data(t) => self.create_global_data(t.clone()),
+            GlobalValue::Identifier(t) => self.resolve_identifier(t).0,
         }
     }
 
@@ -192,14 +174,14 @@ impl Compiler {
             .add_global(wasmly::Global::new(final_heap_pos as i32, true));
     }
 
-    fn get_or_create_text_data(&mut self, str: &str) -> i32 {
+    fn get_or_create_text_data(&mut self, str: &str) -> f64 {
         let mut bytes: Vec<u8> = str.as_bytes().into();
         bytes.push(0);
         self.create_data(bytes)
     }
 
-    fn create_data(&mut self, bytes: Vec<u8>) -> i32 {
-        let pos = self.heap_position as i32;
+    fn create_data(&mut self, bytes: Vec<u8>) -> f64 {
+        let pos = self.heap_position;
         let size = bytes.len();
         self.wasm.add_data(Data::new(pos as i32, bytes));
         let mut final_heap_pos = self.heap_position + (size as f64);
@@ -500,33 +482,7 @@ impl Compiler {
                     } else {
                         panic!("invalid number params for mem_heap_start")
                     }
-                } else if &x.function_name == "mem32" {
-                    if x.params.len() == 1 {
-                        self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![
-                            I32_TRUNC_S_F64,
-                            I32_LOAD,
-                            (0 as i32).into(),
-                            (0 as i32).into(),
-                            F64_CONVERT_S_I32,
-                        ]);
-                    } else if x.params.len() == 2 {
-                        for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k]);
-                            self.function_implementations[i]
-                                .with_instructions(vec![I32_TRUNC_S_F64]);
-                        }
-                        self.function_implementations[i].with_instructions(vec![
-                            I32_STORE,
-                            (0 as i32).into(),
-                            (0 as i32).into(),
-                        ]);
-                        self.function_implementations[i]
-                            .with_instructions(vec![F64_CONST, 0.0.into()]);
-                    } else {
-                        panic!("invalid number params for mem32")
-                    }
-                } else if &x.function_name == "memf64" {
+                } else if &x.function_name == "mem_num" {
                     if x.params.len() == 1 {
                         self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![
@@ -547,7 +503,7 @@ impl Compiler {
                         self.function_implementations[i]
                             .with_instructions(vec![F64_CONST, 0.0.into()]);
                     } else {
-                        panic!("invalid number params for mem32")
+                        panic!("invalid number params for mem_num")
                     }
                 } else if &x.function_name == "=="
                     || &x.function_name == "!="

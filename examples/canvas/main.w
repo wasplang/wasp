@@ -14,6 +14,6 @@
         ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (canvas_set_fill_style ctx (mem32 (+ colors (* 4 x))))
+                   (do (canvas_set_fill_style ctx (mem_num (+ colors (* 8 x))))
                        (canvas_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))

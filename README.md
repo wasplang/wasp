@@ -87,7 +87,7 @@ Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something
         ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (drawing_set_fill_style ctx (mem32 (+ colors (* 4 x))))
+                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* 8 x))))
                        (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))
 ```
@@ -103,7 +103,7 @@ It's often important for a web assembly modules to have some sort of global data
 
 (defn run_my_game
   ...
-  (mem32 high_score (+ (mem32 high_score) 100)  
+  (mem_num high_score (+ (mem_num high_score) 100)  
   ...)
 ```
 
@@ -149,10 +149,8 @@ Please try to use non conflicting names in meantime while this is fleshed out.
 * **(function_name ...)** - call a function with arguments
 * **(mem x:integer)** - get 8-bit value from memory location x
 * **(mem x:integer y)** - set 8-bit value at memory location x to value y
-* **(mem32 x:integer)** - get 32-bit integer value from memory location x
-* **(mem32 x:integer y)** - set 32-bit integer value at memory location x to value y
-* **(memf64 x:integer)** - get 64-bit float value from memory location x
-* **(memf64 x:integer y)** - set 64-bit float value at memory location x to value y
+* **(mem_num x:integer)** - get 64-bit float value from memory location x
+* **(mem_num x:integer y)** - set 64-bit float value at memory location x to value y
 
 * **(mem_heap_start)** - get number that represents the start of the heap
 * **(mem_heap_end)** - get number that represents the end of the heap
