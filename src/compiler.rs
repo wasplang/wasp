@@ -195,6 +195,9 @@ impl Compiler {
     }
 
     fn resolve_identifier(&self, id: &str) -> (f64, IdentifierType) {
+        if id == "SIZE_NUM" {
+            return (8.0,IdentifierType::Global)
+        }
         // look this up in reverse so shadowing works
         let mut p = self.local_names.iter().rev().position(|r| r == id);
         if p.is_some() {

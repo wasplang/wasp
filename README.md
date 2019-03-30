@@ -87,7 +87,7 @@ Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something
         ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* 8 x))))
+                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* SIZE_NUM x))))
                        (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))
 ```
@@ -143,6 +143,9 @@ Please try to use non conflicting names in meantime while this is fleshed out.
 * **bool** - a number representing boolean values. True is 1, false is 0. (e.g. `true` `false`)
 * **(...)** - a global only type this is a a number pointer to sequence of  values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
  Note that numbers in this sequence are 64-bit float, but non-numbers are 32-bit integers.
+
+## Globals
+* **SIZE_NUM** - the length of a number in bytes (8). This is the only global variable in wasp to cut down in magic numbers floating around in code.
 
 ## Functions
 * **([pub] defn name ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
