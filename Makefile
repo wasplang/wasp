@@ -8,3 +8,8 @@ build:
 	cd compiler && make
 serve:
 	http-server -p 8080
+publish-std:
+	cd compiler/vendor/std && git add . && git commit -m 'publishing' && git push
+publish:
+	git add . && git commit -m 'publishing' && git push
+	cargo publish
