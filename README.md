@@ -87,7 +87,7 @@ Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something
         ctx (htmlcanvas_get_context canvas "2d")]
         (loop [x 0]
                (if (< x 3)
-                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* SIZE_NUM x))))
+                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* size_num x))))
                        (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
                        (recur [x (+ x 1)]))))))
 ```
@@ -146,7 +146,8 @@ It's easiest to think that everything is a `f64` number in wasp.
 * **(...)** - a global only type this is a a number pointer to sequence of  values in memory (e.g. `(another_global 1 true :hey (:more-data)`). Use this for embedding raw data into your application memory on startup.
 
 ## Globals
-* **SIZE_NUM** - the length of a number in bytes (8). This is the only global variable in wasp to cut down in magic numbers floating around in code.
+* **nil** - a number that represents nothingness (0). Note that it is also the same value as false and the number 0.
+* **sizenum** - the length of a number in bytes (8). This is a global variable in wasp to cut down in magic numbers floating around in code.
 
 ## Functions
 * **([pub] defn name ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.

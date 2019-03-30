@@ -195,7 +195,10 @@ impl Compiler {
     }
 
     fn resolve_identifier(&self, id: &str) -> (f64, IdentifierType) {
-        if id == "SIZE_NUM" {
+        if id == "nil" {
+            return (0.0,IdentifierType::Global)
+        }
+        if id == "size_num" {
             return (8.0,IdentifierType::Global)
         }
         // look this up in reverse so shadowing works
