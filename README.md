@@ -66,7 +66,9 @@ Wasp is an extremely basic language and standard library.
 (# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 nil)))
 ```
 
-## Structures
+## Structs
+
+Structs are dictionaries
 
 ```
 (defstruct point :x :y)
