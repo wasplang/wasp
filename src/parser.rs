@@ -153,8 +153,15 @@ named!(expression_comment<CompleteStr, Expression>,
 
 named!(expression_literal_string<CompleteStr, Expression>,
     do_parse!(
-      text: ws!(alt!(token_symbol|token_text)) >>
+      text: ws!(token_text) >>
       (Expression::TextLiteral(text))
+    )
+);
+
+named!(expression_literal_token<CompleteStr, Expression>,
+    do_parse!(
+      text: ws!(token_symbol) >>
+      (Expression::SymbolLiteral(text))
     )
 );
 
@@ -276,7 +283,7 @@ named!(expression_populate<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_populate|expression_fnsig|expression_loop|expression_recur|expression_let|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_string|expression_identifier|expression_function_call)
+    alt!(expression_populate|expression_fnsig|expression_loop|expression_recur|expression_let|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier|expression_function_call)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -328,6 +335,33 @@ named!(define_function<CompleteStr, TopLevelOperation>,
   )
 );
 
+named!(struct_pair<CompleteStr, StructPair>,
+  do_parse!(
+    name: token_symbol >>
+    many0!(ws!(token_comment)) >>
+    attributes: opt!(ws!(token_text)) >>
+    many0!(ws!(token_comment)) >>
+    (StructPair{name: name,
+    attributes: attributes})
+  )
+);
+
+named!(define_struct<CompleteStr, TopLevelOperation>,
+  do_parse!(
+    tag!("(")   >>
+    many0!(ws!(token_comment)) >>
+    ws!(tag!("defstruct"))   >>
+    many0!(ws!(token_comment)) >>
+    name: ws!(token_identifier) >>
+    many0!(ws!(token_comment)) >>
+    members: many0!(ws!(struct_pair)) >>
+    many0!(ws!(token_comment)) >>
+    tag!(")")   >>
+    (TopLevelOperation::DefineGlobal(Global{name:name,value:GlobalValue::Struct(StructDefinition{
+    members: members})}))
+  )
+);
+
 named!(define_test_function<CompleteStr, TopLevelOperation>,
   do_parse!(
     tag!("(")   >>
@@ -352,8 +386,15 @@ named!(value_number<CompleteStr, GlobalValue>,
 
 named!(value_text<CompleteStr, GlobalValue>,
   do_parse!(
-    value: alt!(token_symbol|token_text)  >>
+    value: token_text  >>
     (GlobalValue::Text(value))
+  )
+);
+
+named!(value_symbol<CompleteStr, GlobalValue>,
+  do_parse!(
+    value: token_symbol  >>
+    (GlobalValue::Symbol(value))
   )
 );
 
@@ -389,7 +430,7 @@ named!(global_data<CompleteStr, GlobalValue>,
 
 named!(global_value<CompleteStr, GlobalValue>,
   do_parse!(
-    value: ws!(alt!(global_bool_true|global_bool_false|value_number|value_text|global_data)) >>
+    value: ws!(alt!(global_bool_true|global_bool_false|value_number|value_symbol|value_text|global_data)) >>
     (value)
   )
 );
@@ -415,7 +456,7 @@ named!(comment<CompleteStr, TopLevelOperation>,
 
 named!(app<CompleteStr, App>,
   do_parse!(
-    op: many0!(ws!(alt!(comment|external_function|define_function|define_test_function|define_global))) >>
+    op: many0!(ws!(alt!(comment|external_function|define_function|define_struct|define_test_function|define_global))) >>
     eof!() >>
     (App{children:op})
   )

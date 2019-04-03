@@ -22,10 +22,12 @@ pub struct Global {
 
 #[derive(Debug, Clone)]
 pub enum GlobalValue {
+    Symbol(String),
     Number(f64),
     Text(String),
     Data(Vec<GlobalValue>),
     Identifier(String),
+    Struct(StructDefinition)
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +43,17 @@ pub struct FunctionDefinition {
     pub params: Vec<String>,
     pub output: Option<String>,
     pub children: Vec<Expression>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StructPair {
+    pub name: String,
+    pub attributes: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StructDefinition {
+    pub members: Vec<StructPair>,
 }
 
 #[derive(Debug, Clone)]
@@ -87,6 +100,7 @@ pub struct OperationPopulate {
 #[derive(Debug, Clone)]
 pub enum Expression {
     TextLiteral(String),
+    SymbolLiteral(String),
     Identifier(String),
     Comment(String),
     FunctionCall(OperationFunctionCall),

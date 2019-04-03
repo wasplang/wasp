@@ -12,6 +12,7 @@ enum IdentifierType {
 struct Compiler {
     wasm: wasmly::App,
     ast: crate::ast::App,
+    symbols: Vec<String>,
     global_names: Vec<String>,
     global_values: Vec<f64>,
     local_names: Vec<String>,
@@ -28,6 +29,7 @@ impl Compiler {
         let mut c = Compiler {
             wasm: wasmly::App::new(vec![]),
             ast: app,
+            symbols: vec![],
             global_names: vec![],
             global_values: vec![],
             local_names: vec![],
@@ -109,11 +111,34 @@ impl Compiler {
         self.create_data(bytes)
     }
 
+    fn get_symbol_value(&mut self, t:&str) -> f64 {
+        // no symbol has the value 0
+        let v = self.symbols.iter().enumerate().find(|x|&x.1==&t);
+        if let Some(i) = v {
+            return i.0 as f64+1.0;
+        } else {
+            self.symbols.push(t.to_string());
+            return self.symbols.len() as f64;
+        }
+    }
+
     fn get_global_value(&mut self, v: &GlobalValue) -> f64 {
         match v {
+            GlobalValue::Symbol(t) => {
+                self.get_symbol_value(t)
+            },
             GlobalValue::Number(t) => *t,
             GlobalValue::Text(t) => self.get_or_create_text_data(&t),
             GlobalValue::Data(t) => self.create_global_data(t.clone()),
+            GlobalValue::Struct(s) => {
+                let mut t:Vec<GlobalValue> = vec![];
+                for i in 0..s.members.len() {
+                    t.push(GlobalValue::Symbol(s.members[i].name.clone()));
+                    t.push(GlobalValue::Text(s.members[i].attributes.clone().unwrap_or("".to_owned())));
+                }
+                t.push(GlobalValue::Number(0.0));
+                self.create_global_data(t)
+            },
             GlobalValue::Identifier(t) => self.resolve_identifier(t).0,
         }
     }
@@ -223,6 +248,11 @@ impl Compiler {
     #[allow(clippy::cyclomatic_complexity)]
     fn process_expression(&mut self, i: usize, e: &Expression) {
         match e {
+            Expression::SymbolLiteral(x) => {
+                let v = self.get_symbol_value(x);
+                self.function_implementations[i]
+                    .with_instructions(vec![F64_CONST, v.into()]);
+            }
             Expression::Populate(x) => {
                 let val = self.resolve_identifier(&x.name);
                 self.function_implementations[i].with_local(DataType::F64);
