@@ -335,14 +335,11 @@ named!(define_function<CompleteStr, TopLevelOperation>,
   )
 );
 
-named!(struct_pair<CompleteStr, StructPair>,
+named!(struct_pair<CompleteStr, StructMember>,
   do_parse!(
     name: token_symbol >>
     many0!(ws!(token_comment)) >>
-    attributes: opt!(ws!(token_text)) >>
-    many0!(ws!(token_comment)) >>
-    (StructPair{name: name,
-    attributes: attributes})
+    (StructMember{name: name})
   )
 );
 

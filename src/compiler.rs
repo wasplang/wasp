@@ -111,11 +111,11 @@ impl Compiler {
         self.create_data(bytes)
     }
 
-    fn get_symbol_value(&mut self, t:&str) -> f64 {
+    fn get_symbol_value(&mut self, t: &str) -> f64 {
         // no symbol has the value 0
-        let v = self.symbols.iter().enumerate().find(|x|&x.1==&t);
+        let v = self.symbols.iter().enumerate().find(|x| &x.1 == &t);
         if let Some(i) = v {
-            return i.0 as f64+1.0;
+            return i.0 as f64 + 1.0;
         } else {
             self.symbols.push(t.to_string());
             return self.symbols.len() as f64;
@@ -124,21 +124,18 @@ impl Compiler {
 
     fn get_global_value(&mut self, v: &GlobalValue) -> f64 {
         match v {
-            GlobalValue::Symbol(t) => {
-                self.get_symbol_value(t)
-            },
+            GlobalValue::Symbol(t) => self.get_symbol_value(t),
             GlobalValue::Number(t) => *t,
             GlobalValue::Text(t) => self.get_or_create_text_data(&t),
             GlobalValue::Data(t) => self.create_global_data(t.clone()),
             GlobalValue::Struct(s) => {
-                let mut t:Vec<GlobalValue> = vec![];
+                let mut t: Vec<GlobalValue> = vec![];
                 for i in 0..s.members.len() {
                     t.push(GlobalValue::Symbol(s.members[i].name.clone()));
-                    t.push(GlobalValue::Text(s.members[i].attributes.clone().unwrap_or("".to_owned())));
                 }
                 t.push(GlobalValue::Number(0.0));
                 self.create_global_data(t)
-            },
+            }
             GlobalValue::Identifier(t) => self.resolve_identifier(t).0,
         }
     }
@@ -221,10 +218,10 @@ impl Compiler {
 
     fn resolve_identifier(&self, id: &str) -> (f64, IdentifierType) {
         if id == "nil" {
-            return (0.0,IdentifierType::Global)
+            return (0.0, IdentifierType::Global);
         }
         if id == "size_num" {
-            return (8.0,IdentifierType::Global)
+            return (8.0, IdentifierType::Global);
         }
         // look this up in reverse so shadowing works
         let mut p = self.local_names.iter().rev().position(|r| r == id);
@@ -250,8 +247,7 @@ impl Compiler {
         match e {
             Expression::SymbolLiteral(x) => {
                 let v = self.get_symbol_value(x);
-                self.function_implementations[i]
-                    .with_instructions(vec![F64_CONST, v.into()]);
+                self.function_implementations[i].with_instructions(vec![F64_CONST, v.into()]);
             }
             Expression::Populate(x) => {
                 let val = self.resolve_identifier(&x.name);
@@ -284,17 +280,22 @@ impl Compiler {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    F64_CONST, 0.0.into(),
-                                    CALL, (val.0 as i32).into(),
-                                    LOCAL_SET, (loc_storage as i32).into(),
+                                    F64_CONST,
+                                    0.0.into(),
+                                    CALL,
+                                    (val.0 as i32).into(),
+                                    LOCAL_SET,
+                                    (loc_storage as i32).into(),
                                 ]);
                             } else if j == expr.len() - 1 {
                                 for k in 0..expr[j].len() {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET, (loc_storage as i32).into(),
-                                    CALL, (val.0 as i32).into(),
+                                    LOCAL_GET,
+                                    (loc_storage as i32).into(),
+                                    CALL,
+                                    (val.0 as i32).into(),
                                 ]);
                                 break;
                             } else {
@@ -302,9 +303,12 @@ impl Compiler {
                                     self.process_expression(i, &expr[j][k])
                                 }
                                 self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET, (loc_storage as i32).into(),
-                                    CALL, (val.0 as i32).into(),
-                                    LOCAL_SET, (loc_storage as i32).into(),
+                                    LOCAL_GET,
+                                    (loc_storage as i32).into(),
+                                    CALL,
+                                    (val.0 as i32).into(),
+                                    LOCAL_SET,
+                                    (loc_storage as i32).into(),
                                 ]);
                             }
                         }

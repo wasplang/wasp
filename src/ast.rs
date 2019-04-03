@@ -27,7 +27,7 @@ pub enum GlobalValue {
     Text(String),
     Data(Vec<GlobalValue>),
     Identifier(String),
-    Struct(StructDefinition)
+    Struct(StructDefinition),
 }
 
 #[derive(Debug, Clone)]
@@ -46,14 +46,13 @@ pub struct FunctionDefinition {
 }
 
 #[derive(Debug, Clone)]
-pub struct StructPair {
+pub struct StructMember {
     pub name: String,
-    pub attributes: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct StructDefinition {
-    pub members: Vec<StructPair>,
+    pub members: Vec<StructMember>,
 }
 
 #[derive(Debug, Clone)]

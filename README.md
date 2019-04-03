@@ -44,7 +44,7 @@ If you think your standard library is out of date, just run `wasp vendor`
 
 # Simple Data Structures
 
-Wasp is an extremely basic language and standard library. Everything is a linked list.
+Wasp is an extremely basic language and standard library.
 
 ## Linked List
 
@@ -64,6 +64,18 @@ Wasp is an extremely basic language and standard library. Everything is a linked
 
 ```clojure
 (# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 nil)))
+```
+
+## Structures
+
+```
+(defstruct point :x :y)
+
+(pub defn create_point []
+  (let [foo (new point)]
+    (set foo :x 1)
+    (set foo :y 1)
+    foo))
 ```
 
 # Drawing
