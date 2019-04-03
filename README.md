@@ -70,7 +70,7 @@ Wasp is an extremely basic language and standard library.
 
 Structs are dictionaries
 
-```
+```clojure
 (defstruct point :x :y)
 
 (pub defn create_point []
