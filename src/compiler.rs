@@ -357,6 +357,15 @@ impl Compiler {
                     self.recur_depth.into(),
                 ]);
             }
+            Expression::Assignment(x) => {
+                self.process_expression(i, &x.value);
+                self.function_implementations[i].with_local(DataType::F64);
+                self.function_implementations[i]
+                    .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into(),
+                    LOCAL_GET, (self.local_names.len() as u32).into()]);
+
+                self.local_names.push((&x.id).to_string());
+            }
             Expression::Let(x) => {
                 for j in 0..x.bindings.len() {
                     let binding = &x.bindings[j];

@@ -1,1 +1,3 @@
-pub fn main(){ 42 }
+pub fn main(){
+  42
+}

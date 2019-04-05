@@ -280,7 +280,7 @@ named!(expression_populate<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_if_statement|expression_fnsig|expression_let|expression_operator_call|expression_unary_operator_call|expression_function_call|expression_populate|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
+    alt!(expression_if_statement|expression_fnsig|expression_let|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_populate|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -298,6 +298,15 @@ named!(expression_operator_call<CompleteStr, Expression>,
     expr_b: ws!(expression) >>
     tag!(")") >>
     (Expression::FunctionCall(OperationFunctionCall{function_name:function_name,params:vec![expr_a,expr_b]}))
+  )
+);
+
+named!(expression_assignment<CompleteStr, Expression>,
+  do_parse!(
+    id: ws!(token_identifier) >>
+    ws!(tag!("=")) >>
+    expr: ws!(expression) >>
+    (Expression::Assignment(OperationAssignment{id:id,value:Box::new(expr)}))
   )
 );
 

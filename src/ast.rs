@@ -72,6 +72,13 @@ pub struct OperationRecur {
 }
 
 #[derive(Debug, Clone)]
+pub struct OperationAssignment {
+    pub id:String,
+    pub value: Box<Expression>,
+}
+
+
+#[derive(Debug, Clone)]
 pub struct OperationLoop {
     pub bindings: Vec<(String, Expression)>,
     pub expressions: Vec<Expression>,
@@ -91,6 +98,7 @@ pub struct OperationPopulate {
 
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Assignment(OperationAssignment),
     TextLiteral(String),
     SymbolLiteral(String),
     Identifier(String),
