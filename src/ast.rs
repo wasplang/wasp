@@ -68,7 +68,6 @@ pub struct OperationLet {
 
 #[derive(Debug, Clone)]
 pub struct OperationRecur {
-    pub bindings: Vec<(String, Expression)>,
 }
 
 #[derive(Debug, Clone)]
@@ -77,10 +76,15 @@ pub struct OperationAssignment {
     pub value: Box<Expression>,
 }
 
+#[derive(Debug, Clone)]
+pub struct OperationIfStatement {
+    pub condition: Box<Expression>,
+    pub if_true: Vec<Expression>,
+    pub if_false: Vec<Expression>,
+}
 
 #[derive(Debug, Clone)]
 pub struct OperationLoop {
-    pub bindings: Vec<(String, Expression)>,
     pub expressions: Vec<Expression>,
 }
 
@@ -98,6 +102,7 @@ pub struct OperationPopulate {
 
 #[derive(Debug, Clone)]
 pub enum Expression {
+    IfStatement(OperationIfStatement),
     Assignment(OperationAssignment),
     TextLiteral(String),
     SymbolLiteral(String),

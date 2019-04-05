@@ -3,6 +3,7 @@ use failure::Error;
 use wasmly::WebAssembly::*;
 use wasmly::*;
 
+#[derive(PartialEq)]
 enum IdentifierType {
     Global,
     Local,
@@ -135,7 +136,7 @@ impl Compiler {
                 t.push(GlobalValue::Number(0.0));
                 self.create_global_data(t)
             }
-            GlobalValue::Identifier(t) => self.resolve_identifier(t).0,
+            GlobalValue::Identifier(t) => self.resolve_identifier(t).unwrap().0,
         }
     }
 
@@ -203,30 +204,30 @@ impl Compiler {
         pos
     }
 
-    fn resolve_identifier(&self, id: &str) -> (f64, IdentifierType) {
+    fn resolve_identifier(&self, id: &str) -> Option<(f64, IdentifierType)> {
         if id == "nil" {
-            return (0.0, IdentifierType::Global);
+            return Some((0.0, IdentifierType::Global));
         }
         if id == "size_num" {
-            return (8.0, IdentifierType::Global);
+            return Some((8.0, IdentifierType::Global));
         }
         // look this up in reverse so shadowing works
         let mut p = self.local_names.iter().rev().position(|r| r == id);
         if p.is_some() {
-            return (
+            return Some((
                 self.local_names.len() as f64 - 1.0 - p.unwrap() as f64,
                 IdentifierType::Local,
-            );
+            ));
         }
         p = self.function_names.iter().position(|r| r == id);
         if p.is_some() {
-            return (p.unwrap() as f64, IdentifierType::Function);
+            return Some((p.unwrap() as f64, IdentifierType::Function));
         }
         p = self.global_names.iter().position(|r| r == id);
         if p.is_some() {
-            return (self.global_values[p.unwrap()], IdentifierType::Global);
+            return Some((self.global_values[p.unwrap()], IdentifierType::Global));
         }
-        panic!(format!("could not find identifier \"{}\"", id))
+        None
     }
 
     #[allow(clippy::cyclomatic_complexity)]
@@ -237,7 +238,7 @@ impl Compiler {
                 self.function_implementations[i].with_instructions(vec![F64_CONST, v.into()]);
             }
             Expression::Populate(x) => {
-                let val = self.resolve_identifier(&x.name);
+                let val = self.resolve_identifier(&x.name).unwrap();
                 self.function_implementations[i].with_local(DataType::F64);
                 self.local_names.push("".to_string());
                 let loc_storage = (self.local_names.len() - 1) as i32;
@@ -312,14 +313,6 @@ impl Compiler {
             }
             Expression::Loop(x) => {
                 self.recur_depth = 0;
-                for j in 0..x.bindings.len() {
-                    let binding = &x.bindings[j];
-                    self.process_expression(i, &binding.1);
-                    self.function_implementations[i].with_local(DataType::F64);
-                    self.function_implementations[i]
-                        .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into()]);
-                    self.local_names.push((&binding.0).to_string());
-                }
                 if !x.expressions.is_empty() {
                     self.function_implementations[i].with_instructions(vec![LOOP, F64]);
                     for k in 0..x.expressions.len() {
@@ -332,24 +325,8 @@ impl Compiler {
                 } else {
                     panic!("useless infinite loop detected")
                 }
-                for _ in 0..x.bindings.len() {
-                    self.local_names.pop();
-                }
             }
-            Expression::Recur(x) => {
-                for j in 0..x.bindings.len() {
-                    let binding = &x.bindings[j];
-                    let name = (&binding.0).to_string();
-                    let val = self.resolve_identifier(&name);
-                    match val.1 {
-                        IdentifierType::Local => {
-                            self.process_expression(i, &binding.1);
-                            self.function_implementations[i]
-                                .with_instructions(vec![LOCAL_SET, (val.0 as i32).into()]);
-                        }
-                        _ => panic!("cannot recur by rebinding a non-local identifier"),
-                    }
-                }
+            Expression::Recur(_) => {
                 self.function_implementations[i].with_instructions(vec![
                     F64_CONST,
                     0.0.into(),
@@ -357,14 +334,55 @@ impl Compiler {
                     self.recur_depth.into(),
                 ]);
             }
+            Expression::IfStatement(x) => {
+                self.recur_depth += 1;
+                self.process_expression(i, &x.condition);
+                self.function_implementations[i].with_instructions(vec![
+                    F64_CONST,
+                    0.0.into(),
+                    F64_EQ,
+                    I32_CONST,
+                    0.into(),
+                    I32_EQ,
+                ]);
+                self.function_implementations[i].with_instructions(vec![IF, F64]);
+                for k in 0..x.if_true.len() {
+                    self.process_expression(i, &x.if_true[k]);
+                    if k != x.if_true.len() - 1 {
+                        self.function_implementations[i].with_instructions(vec![DROP]);
+                    }
+                }
+                self.function_implementations[i].with_instructions(vec![ELSE]);
+                for k in 0..x.if_false.len() {
+                    self.process_expression(i, &x.if_false[k]);
+                    if k != x.if_false.len() - 1 {
+                        self.function_implementations[i].with_instructions(vec![DROP]);
+                    }
+                }
+                self.function_implementations[i].with_instructions(vec![END]);
+            }
             Expression::Assignment(x) => {
                 self.process_expression(i, &x.value);
                 self.function_implementations[i].with_local(DataType::F64);
+                let p = self.resolve_identifier(&x.id);
+                let idx = if p.is_some() {
+                    let ident = p.unwrap();
+                    if ident.1 == IdentifierType::Local{
+                        ident.0 as u32
+                    } else {
+                        let l = self.local_names.len() as u32;
+                        self.local_names.push((&x.id).to_string());
+                        l
+                    }
+                } else {
+                    let l = self.local_names.len() as u32;
+                    self.local_names.push((&x.id).to_string());
+                    l
+                };
                 self.function_implementations[i]
-                    .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into(),
-                    LOCAL_GET, (self.local_names.len() as u32).into()]);
-
-                self.local_names.push((&x.id).to_string());
+                    .with_instructions(vec![
+                        LOCAL_SET, idx.into(),
+                        LOCAL_GET, idx.into()]);
             }
             Expression::Let(x) => {
                 for j in 0..x.bindings.len() {
@@ -424,44 +442,6 @@ impl Compiler {
                         }
                     } else {
                         panic!("call must have at least function signature and function index")
-                    }
-                } else if &x.function_name == "if" {
-                    self.recur_depth += 1;
-                    if x.params.len() == 2 {
-                        self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![
-                            F64_CONST,
-                            0.0.into(),
-                            F64_EQ,
-                            I32_CONST,
-                            0.into(),
-                            I32_EQ,
-                        ]);
-                        self.function_implementations[i].with_instructions(vec![IF, F64]);
-                        self.process_expression(i, &x.params[1]);
-                        self.function_implementations[i].with_instructions(vec![
-                            ELSE,
-                            F64_CONST,
-                            0.0.into(),
-                            END,
-                        ]);
-                    } else if x.params.len() == 3 {
-                        self.process_expression(i, &x.params[0]);
-                        self.function_implementations[i].with_instructions(vec![
-                            F64_CONST,
-                            0.0.into(),
-                            F64_EQ,
-                            I32_CONST,
-                            0.into(),
-                            I32_EQ,
-                        ]);
-                        self.function_implementations[i].with_instructions(vec![IF, F64]);
-                        self.process_expression(i, &x.params[1]);
-                        self.function_implementations[i].with_instructions(vec![ELSE]);
-                        self.process_expression(i, &x.params[2]);
-                        self.function_implementations[i].with_instructions(vec![END]);
-                    } else {
-                        panic!("invalid number of params for if")
                     }
                 } else if &x.function_name == "mem" {
                     if x.params.len() == 1 {
@@ -699,7 +679,7 @@ impl Compiler {
                         F64_CONVERT_S_I32,
                     ]);
                 } else {
-                    let (function_handle, _) = self.resolve_identifier(&x.function_name);
+                    let (function_handle, _) = self.resolve_identifier(&x.function_name).unwrap();
                     for k in 0..x.params.len() {
                         self.process_expression(i, &x.params[k])
                     }
@@ -713,7 +693,7 @@ impl Compiler {
                     .with_instructions(vec![F64_CONST, (pos as f64).into()]);
             }
             Expression::Identifier(x) => {
-                let val = self.resolve_identifier(&x);
+                let val = self.resolve_identifier(&x).unwrap();
                 match val.1 {
                     IdentifierType::Global => {
                         self.function_implementations[i]

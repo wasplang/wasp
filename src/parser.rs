@@ -237,14 +237,14 @@ named!(expression_loop<CompleteStr, Expression>,
     ws!(tag!("{"))   >>
     expressions: ws!(many1!(ws!(expression))) >>
     tag!("}")   >>
-    (Expression::Loop(OperationLoop{bindings:vec![],expressions:expressions}))
+    (Expression::Loop(OperationLoop{expressions:expressions}))
   )
 );
 
 named!(expression_recur<CompleteStr, Expression>,
   do_parse!(
     tag!("recur")   >>
-    (Expression::Recur(OperationRecur{bindings:vec![]}))
+    (Expression::Recur(OperationRecur{}))
   )
 );
 
@@ -317,13 +317,13 @@ named!(expression_if_statement<CompleteStr, Expression>,
     expr_a: ws!(expression) >>
     ws!(tag!(")")) >>
     ws!(tag!("{")) >>
-    expr_b: ws!(expression) >>
+    expr_b: ws!(ws!(many1!(ws!(expression)))) >>
     tag!("}") >>
     ws!(tag!("else")) >>
     ws!(tag!("{")) >>
-    expr_c: ws!(expression) >>
+    expr_c: ws!(ws!(many1!(ws!(expression)))) >>
     tag!("}") >>
-    (Expression::FunctionCall(OperationFunctionCall{function_name:"if".to_string(),params:vec![expr_a,expr_b,expr_c]}))
+    (Expression::IfStatement(OperationIfStatement{condition:Box::new(expr_a),if_true:expr_b,if_false:expr_c}))
   )
 );
 
@@ -347,7 +347,7 @@ named!(expression_function_call<CompleteStr, Expression>,
 
 named!(function_operations<CompleteStr, Vec<Expression>>,
   do_parse!(
-    op: many1!(ws!(alt!(expression))) >>
+    op: many1!(ws!(expression)) >>
     (op)
   )
 );
