@@ -41,7 +41,7 @@ fn to_data_type(c: &str) -> DataType {
 named!(
     token_comment<CompleteStr,String>,
     do_parse!(
-        pair: pair!(tag!(";"),take_while!(is_comment_char))>>
+        pair: pair!(tag!("//"),take_while!(is_comment_char))>>
         (pair.0.to_string())
     )
 );
@@ -132,20 +132,18 @@ named!(
 
 named!(external_function<CompleteStr, TopLevelOperation>,
   do_parse!(
-    tag!("(")   >>
     ws!(tag!("extern"))   >>
     function_name: ws!(token_identifier) >>
-    ws!(tag!("["))   >>
-    params: many0!(ws!(token_identifier)) >>
-    ws!(tag!("]"))   >>
-    tag!(")")   >>
+    ws!(tag!("("))   >>
+    params: ws!(separated_list!(tag!(","),ws!(token_identifier))) >>
+    ws!(tag!(")"))   >>
     (TopLevelOperation::ExternalFunction(ExternalFunction{name:function_name,params:params}))
   )
 );
 
 named!(expression_comment<CompleteStr, Expression>,
   do_parse!(
-    tag!(";") >>
+    tag!("//") >>
     comment: map!(take_while!(is_comment_char),to_string) >>
     (Expression::Comment(comment))
   )
@@ -203,13 +201,13 @@ named!(expression_let_pair<CompleteStr, (String, Expression)>,
 
 named!(expression_let<CompleteStr, Expression>,
   do_parse!(
-    tag!("(")   >>
     ws!(tag!("let"))   >>
-    ws!(tag!("["))   >>
+    ws!(tag!("("))   >>
     bindings: ws!(many0!(ws!(expression_let_pair))) >>
-    ws!(tag!("]"))   >>
+    ws!(tag!(")"))   >>
+    ws!(tag!("{"))   >>
     expressions: ws!(many1!(ws!(expression))) >>
-    tag!(")")   >>
+    tag!("}")   >>
     (Expression::Let(OperationLet{bindings:bindings,expressions:expressions}))
   )
 );
@@ -283,22 +281,22 @@ named!(expression_populate<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_populate|expression_fnsig|expression_loop|expression_recur|expression_let|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier|expression_function_call)
+    alt!(expression_let|expression_function_call|expression_populate|expression_fnsig|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
     do_parse!(
-      op: many0!(ws!(expression)) >>
+      op: ws!(separated_list!(tag!(","),ws!(expression))) >>
       (op)
     )
 );
 
 named!(expression_function_call<CompleteStr, Expression>,
   do_parse!(
-    tag!("(")   >>
     function_name: ws!(function_identifiers) >>
-    params: function_params >>
-    tag!(")")   >>
+    tag!("(")   >>
+    params: ws!(function_params) >>
+    ws!(tag!(")"))   >>
     (Expression::FunctionCall(OperationFunctionCall{function_name:function_name,params:params}))
   )
 );
@@ -312,21 +310,21 @@ named!(function_operations<CompleteStr, Vec<Expression>>,
 
 named!(define_function<CompleteStr, TopLevelOperation>,
   do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
     external_name:opt!( ws!(tag!("pub"))) >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("defn"))   >>
+    ws!(tag!("fn"))   >>
     many0!(ws!(token_comment)) >>
     function_name: ws!(token_identifier) >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
+    ws!(tag!("("))   >>
     many0!(ws!(token_comment)) >>
     params: many0!(ws!(token_identifier)) >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
+    ws!(tag!(")"))   >>
+    many0!(ws!(token_comment)) >>
+    ws!(tag!("{"))   >>
     children: function_operations >>
-    tag!(")")   >>
+    tag!("}")   >>
     (TopLevelOperation::DefineFunction(FunctionDefinition{name: function_name,
     exported: external_name.is_some(),
     params: params,
@@ -356,21 +354,6 @@ named!(define_struct<CompleteStr, TopLevelOperation>,
     tag!(")")   >>
     (TopLevelOperation::DefineGlobal(Global{name:name,value:GlobalValue::Struct(StructDefinition{
     members: members})}))
-  )
-);
-
-named!(define_test_function<CompleteStr, TopLevelOperation>,
-  do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("deftest"))   >>
-    many0!(ws!(token_comment)) >>
-    function_name: ws!(token_identifier) >>
-    many0!(ws!(token_comment)) >>
-    children: function_operations >>
-    tag!(")")   >>
-    (TopLevelOperation::DefineTestFunction(TestFunctionDefinition{name: function_name,
-    children: children}))
   )
 );
 
@@ -419,7 +402,7 @@ named!(global_identifier<CompleteStr, GlobalValue>,
 named!(global_data<CompleteStr, GlobalValue>,
   do_parse!(
     tag!("(")  >>
-    values: ws!(many1!(ws!(alt!(global_value|global_identifier)))) >>
+    values: ws!(separated_list!(tag!(","),ws!(alt!(global_value|global_identifier)))) >>
     tag!(")")  >>
     (GlobalValue::Data(values))
   )
@@ -434,18 +417,17 @@ named!(global_value<CompleteStr, GlobalValue>,
 
 named!(define_global<CompleteStr, TopLevelOperation>,
   do_parse!(
-    tag!("(")   >>
-    ws!(tag!("def"))   >>
+    ws!(tag!("static"))   >>
     name: ws!(token_identifier) >>
+    ws!(tag!("="))   >>
     value: global_value >>
-    tag!(")")   >>
     (TopLevelOperation::DefineGlobal(Global{name: name,value:value}))
   )
 );
 
 named!(comment<CompleteStr, TopLevelOperation>,
   do_parse!(
-    tag!(";") >>
+    tag!("//") >>
     comment: map!(take_while!(is_comment_char),to_string) >>
     (TopLevelOperation::Comment(comment))
   )
@@ -453,7 +435,7 @@ named!(comment<CompleteStr, TopLevelOperation>,
 
 named!(app<CompleteStr, App>,
   do_parse!(
-    op: many0!(ws!(alt!(comment|external_function|define_function|define_struct|define_test_function|define_global))) >>
+    op: many0!(ws!(alt!(comment|external_function|define_function|define_struct|define_global))) >>
     eof!() >>
     (App{children:op})
   )

@@ -72,7 +72,6 @@ impl Compiler {
             .iter()
             .filter_map(|x| match x {
                 TopLevelOperation::DefineFunction(_) => Some(x.clone()),
-                TopLevelOperation::DefineTestFunction(_) => Some(x.clone()),
                 _ => None,
             })
             .collect::<Vec<TopLevelOperation>>();
@@ -147,11 +146,6 @@ impl Compiler {
             if let TopLevelOperation::DefineFunction(function_def) = &self.function_defs[i] {
                 self.function_names.push(function_def.name.clone());
                 self.non_imported_functions.push(function_def.name.clone());
-            } else if let TopLevelOperation::DefineTestFunction(function_def) =
-                &self.function_defs[i]
-            {
-                self.function_names.push(function_def.name.clone());
-                self.non_imported_functions.push(function_def.name.clone());
             }
         }
 
@@ -163,13 +157,6 @@ impl Compiler {
                     function.with_name(&function_def.name);
                 }
                 function.with_inputs(function_def.params.iter().map(|_| DataType::F64).collect());
-                function.with_output(DataType::F64);
-                self.function_implementations.push(function);
-            } else if let TopLevelOperation::DefineTestFunction(function_def) =
-                &self.function_defs[i]
-            {
-                let mut function = Function::new();
-                function.with_name(&format!("test_{}", function_def.name));
                 function.with_output(DataType::F64);
                 self.function_implementations.push(function);
             }
@@ -753,35 +740,6 @@ impl Compiler {
                 }
                 //end the function
                 self.function_implementations[i].with_instructions(vec![END]);
-            } else if let TopLevelOperation::DefineTestFunction(f) = self.function_defs[i].clone() {
-                self.function_implementations[i].with_local(DataType::F64);
-                self.local_names = vec![("").to_string()];
-                self.function_implementations[i].with_instructions(vec![BLOCK, F64]);
-                for j in 0..f.children.len() {
-                    self.process_expression(i, &f.children[j].clone());
-                    self.function_implementations[i].with_instructions(vec![
-                        LOCAL_SET,
-                        (0 as i32).into(),
-                        LOCAL_GET,
-                        (0 as i32).into(),
-                        F64_CONST,
-                        0.0.into(),
-                        F64_NE,
-                        IF,
-                        EMPTY,
-                        LOCAL_GET,
-                        (0 as i32).into(),
-                        BR,
-                        (1 as i32).into(),
-                        END,
-                    ]);
-                }
-                self.function_implementations[i].with_instructions(vec![
-                    F64_CONST,
-                    0.0.into(),
-                    END,
-                    END,
-                ]);
             }
         }
 

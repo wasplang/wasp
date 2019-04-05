@@ -1,3 +1,2 @@
-(extern console_log [message])
-(pub defn main []
-  (console_log "hello world!"))
+extern console_log(message)
+pub fn main(){ console_log("hello world!") }

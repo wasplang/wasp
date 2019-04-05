@@ -10,7 +10,6 @@ pub enum TopLevelOperation {
     Comment(String),
     DefineGlobal(Global),
     DefineFunction(FunctionDefinition),
-    DefineTestFunction(TestFunctionDefinition),
     ExternalFunction(ExternalFunction),
 }
 
@@ -53,12 +52,6 @@ pub struct StructMember {
 #[derive(Debug, Clone)]
 pub struct StructDefinition {
     pub members: Vec<StructMember>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TestFunctionDefinition {
-    pub name: String,
-    pub children: Vec<Expression>,
 }
 
 #[derive(Debug, Clone)]
