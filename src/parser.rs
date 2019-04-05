@@ -71,15 +71,13 @@ named!(
     )
 );
 
-
 named!(
     function_identifiers<CompleteStr,String>,
     do_parse!(
-        id: alt!(map!(tag!("call"),to_string)|token_identifier|map!(tag!("do"),to_string)|map!(tag!("if"),to_string))>>
+        id: alt!(map!(tag!("assert"),to_string)|map!(tag!("call"),to_string)|token_identifier)>>
         (id)
     )
 );
-
 
 named!(
     token_data_type<CompleteStr,DataType>,
@@ -313,9 +311,7 @@ named!(expression_assignment<CompleteStr, Expression>,
 named!(expression_if_statement<CompleteStr, Expression>,
   do_parse!(
     ws!(tag!("if")) >>
-    ws!(tag!("(")) >>
     expr_a: ws!(expression) >>
-    ws!(tag!(")")) >>
     ws!(tag!("{")) >>
     expr_b: ws!(ws!(many1!(ws!(expression)))) >>
     tag!("}") >>

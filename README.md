@@ -3,11 +3,12 @@ a programming language for extremely concise web assembly modules
 
 **warning:** this compiler is very alpha and error messages aren't the best, but it works and language is simple!
 
-```clojure
-; main.w
-(extern console_log [message])
-(pub defn main []
-  (console_log "Hello World!"))
+```rust
+// main.w
+extern console_log(message)
+pub fn main(){
+  console_log("Hello World!")
+}
 ```
 
 # Features
@@ -48,62 +49,78 @@ Wasp is an extremely basic language and standard library.
 
 ## Linked List
 
-```clojure
-(cons 42 nil) ; returns the memory location of cons
+```rust
+cons(42,nil) // returns the memory location of cons
 ```
-```clojure
-(head (cons 42 nil) ; return the head value 42
+```rust
+head(cons(42,nil)) // return the head value 42
 ```
-```clojure
-(tail (cons 42 nil) ; returns the memory location of tail
-```
-
-```clojure
-(cons 1 (cons 2 (cons 3 nil)) ; returns a linked list
+```rust
+tail(cons(42,nil)) // returns the memory location of tail
 ```
 
-```clojure
-(# cons 1 2 3) ; short hand for (cons 1 (cons 2 (cons 3 nil)))
+```rust
+cons(1,cons(2,cons(3,nil))) // returns a linked list
+```
+
+```rust
+nest(cons,1,2,3) // short hand for (cons 1 (cons 2 (cons 3 nil)))
 ```
 
 ## Structs
 
 Structs are dictionaries
 
-```clojure
-(defstruct point :x :y)
+```rust
+struct point { :x :y }
 
-(pub defn create_point []
-  (let [foo (new point)]
-    (set foo :x 1)
-    (set foo :y 1)
-    foo))
+pub fn create_point(){
+  foo = malloc(size_of(point))
+  set(foo,:x,1)
+  set(foo,:y,1)
+  foo
+}
 ```
 
 # Drawing
 
 Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
 
-```clojure
-(extern global_get_window [])
-(extern window_get_document [window])
-(extern document_query_selector [document query])
-(extern htmlcanvas_get_context [element context])
-(extern drawing_set_fill_style [canvas color])
-(extern drawing_fill_rect [canvas x y w h])
+```rust
+extern console_log(msg)
+extern global_get_window()
+extern window_get_document(window)
+extern document_query_selector(document,query)
+extern htmlcanvas_get_context(element,context)
+extern canvas_set_fill_style(canvas,color)
+extern canvas_fill_rect(canvas,x,y,w,h)
 
-(def colors ("black" "grey" "red"))
+static colors = ("black","grey","red")
 
-(pub defn main []
-  (let [window (global_get_window)
-        document (window_get_document window)
-        canvas (document_query_selector document "#screen")
-        ctx (htmlcanvas_get_context canvas "2d")]
-        (loop [x 0]
-               (if (< x 3)
-                   (do (drawing_set_fill_style ctx (mem_num (+ colors (* size_num x))))
-                       (drawing_fill_rect ctx (* x 10) (* x 10) 50 50 )
-                       (recur [x (+ x 1)]))))))
+pub fn main(){
+    // setup a drawing context
+    window = global_get_window()
+    document = window_get_document(window)
+    canvas = document_query_selector(document,"#screen")
+    ctx = htmlcanvas_get_context(canvas,"2d")
+
+    x = 0
+    loop {
+        // get the offset for the color to use
+        color_offset = (colors + (x * size_num))
+        // set current color to string at that position
+        canvas_set_fill_style(ctx,mem_num(color_offset))
+        // draw the rect
+        canvas_fill_rect(ctx,(x * 10),(x * 10),50,50)
+        // recur until 3 squares are drawn
+        x = (x + 1)
+        if (x < 3) {
+            recur
+        } else {
+            0
+        }
+    }
+}
 ```
 
 See it working [here](https://wasplang.github.io/wasp/examples/canvas/index.html)
@@ -112,13 +129,13 @@ See it working [here](https://wasplang.github.io/wasp/examples/canvas/index.html
 
 It's often important for a web assembly modules to have some sort of global data that can be changed.  For instance in a game we might have a high score.
 
-```clojure
-(def high_score (0) )
-
-(defn run_my_game
+```rust
+high_score = 0
+fn run_my_game(){
   ...
-  (mem_num high_score (+ (mem_num high_score) 100)  
-  ...)
+  mem_num(high_score,(mem_num(high_score) + 100))
+  ...
+}
 ```
 
 # Project Management
@@ -164,59 +181,56 @@ It's easiest to think that everything is a `f64` number in wasp.
 * **sizenum** - the length of a number in bytes (8). This is a global variable in wasp to cut down in magic numbers floating around in code.
 
 ## Functions
-* **([pub] defn name ... )** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
-* **(function_name ...)** - call a function with arguments
-* **(mem x:integer)** - get 8-bit value from memory location x
-* **(mem x:integer y)** - set 8-bit value at memory location x to value y
-* **(mem_num x:integer)** - get 64-bit float value from memory location x
-* **(mem_num x:integer y)** - set 64-bit float value at memory location x to value y
+* **[pub] fn name (x,...){ ... })** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
+* **function_name(...)** - call a function with arguments
+* **mem(x:integer)** - get 8-bit value from memory location x
+* **mem(x:integer y)** - set 8-bit value at memory location x to value y
+* **mem_num(x:integer)** - get 64-bit float value from memory location x
+* **mem_num(x:integer y)** - set 64-bit float value at memory location x to value y
 
-* **(mem_heap_start)** - get number that represents the start of the heap
-* **(mem_heap_end)** - get number that represents the end of the heap
-* **(mem_heap_end x)** - set number value that represents the end of the heap
-* **(if x y)** - if x is true return expression y otherwise return 0
-* **(if x y z)** - if x is true return expression y otherwise return expression z
-* **(do ... )** - executes a list of expressions and returns the value of the last. useful putting complicated expressions in places that expect one expression.
-* **(let [x0:identifier y0:expression x1:identifier y1:expression ... ] ... )** -  bind pairs of values to identifiers. Then run a sequence of expressions that can use those values by their identifier. Returns the value of the last expression in sequence. bindings specified in let shadow those at higher scopes.
-* **(loop [x0:identifier y0:expression x1:identifier y1:expression ... ] ... x )** - bind pairs of values to identifiers. Then run a sequence of expressions that can use those values by their identifier. Returns the value of the last expression in sequence. bindings specified in loop shadow those at higher scopes.
-* **(recur [x0:identifier y0:expression x1:identifier y1:expression ... ] ... x )** - rebinds pairs of values to identifiers and restarts the innermost loop.
-* **(fnsig [x0 x1 .. ] y)** - gets the value of a function signature with inputs x0, x1, etc and output y
-* **(call x f y0 y1 ...)** call a function with signature x and function handle f with parameters y0, y1, ...
-* **(# function_name e1 e2 e3 ...)** recursively call a chain of functions (<fn> e1 (<fn> e2 (<fn> e3 0))). I call this the nest operator. This function works differently the more parameters your fn takes.
+* **mem_heap_start()** - get number that represents the start of the heap
+* **mem_heap_end()** - get number that represents the end of the heap
+* **mem_heap_end(x)** - set number value that represents the end of the heap
+* **if x { y } )** - if x is true return expression y otherwise return 0
+* **if x { y } else { z })** - if x is true return expression y otherwise return expression z
+* **x = y** -  bind the value of an expression y to an identifier x
+* **loop { ... x } ** - executes a list of expressions and returns the last expression x. loop can be restarted with a recur.
+* **recur** - restarts a loop
+* **fn(x,x1 ..)->y** - gets the value of a function signature with inputs x0, x1, etc and output y
+* **call(x,f,y0,y1 ...)** call a function with signature x and function handle f with parameters y0, y1, ...
+* **nest(function_name,e1,e2,e3,...)** recursively call a chain of functions (<fn> e1 (<fn> e2 (<fn> e3 0))). This function works differently the more parameters your fn takes.
 
 ### Common Operators
 These oprators work pretty much how you'd expect if you've used C
 
-* **(+ ...)** - sums a list of values and returns result
-* **(- ...)** - subtracts a list of values and returns result
-* **(\* ...)** - multiplies a list of values and returns result
-* **(/ ...)** - divides a list of values and returns result
-* **(% ...)** - modulos a list of values and returns result
-* **(== x y)** - returns true if values are equal, false if otherwise
-* **(!= x )** - returns true if values are not equal, false if otherwise
-* **(< x y)** -  returns true if x is less than y, false if otherwise
-* **(> x y)** - returns true if x is greater than y, false if otherwise
-* **(<= x y)** - returns true if x is less than or equal y, false if otherwise
-* **(>= x y)** - returns true if x is greater than or equal y, false if otherwise
-* **(and x y)** - returns true if x and y are true, false if otherwise
-* **(or x y)** - returns true if x or y are true, false if otherwise
-* **(& x y)** - returns bitwise and of x and y
-* **(| x y)** - returns bitwise or of x and y
-* **(! x )** - returns true if zero and false if not zero
-* **(^ x )** - bitwise exclusive or of x
-* **(~ x )** - bitwise complement of x
-* **(<< x y)** - shift x left by y bits
-* **(>> x y)** - shift x right by y bits
+* **(x + y)** - sums a list of values and returns result
+* **(x - y)** - subtracts a list of values and returns result
+* **(x \* y)** - multiplies a list of values and returns result
+* **(x / y)** - divides a list of values and returns result
+* **(x % y)** - modulos a list of values and returns result
+* **(x == y)** - returns true if values are equal, false if otherwise
+* **(x != y)** - returns true if values are not equal, false if otherwise
+* **(x < y)** -  returns true if x is less than y, false if otherwise
+* **(x > y)** - returns true if x is greater than y, false if otherwise
+* **(x <= y)** - returns true if x is less than or equal y, false if otherwise
+* **(x >= y)** - returns true if x is greater than or equal y, false if otherwise
+* **(x and y)** - returns true if x and y are true, false if otherwise
+* **(x or y)** - returns true if x or y are true, false if otherwise
+* **(x & y)** - returns bitwise and of x and y
+* **(x | y)** - returns bitwise or of x and y
+* **!x** - returns true if zero and false if not zero
+* **^x** - bitwise exclusive or of x
+* **~x** - bitwise complement of x
+* **(x << y)** - shift x left by y bits
+* **(x >> y)** - shift x right by y bits
 
 ## Testing
-* **(deftest <test-name> x0 x1)** - executes expression x0 then x1 etc. and stops when it first encounters a value and return the value otherwise if all expressions return 0, 0 is returned. Test names will be exported by default as `"test_"+name` when compiled in debug and removed when built with `wasp build --release`. The function `is` comes from the standard library.
-
-```clojure
-(deftest addition
-  (is (= 4 (+ 2 2)) "2 + 2 should be 4")
-  (is (= 7 (+ 3 4)) "3 + 4 should be 7"))
+```rust
+pub test_addition(){
+  assert(4,(2+2),"2 + 2 should be 4")
+  assert(7,(3+4),"3 + 4 should be 7")
+}
 ```
-
 See it working [here](https://wasplang.github.io/wasp/examples/testing/index.html)
 
 ## Why so few functions?

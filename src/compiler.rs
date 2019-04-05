@@ -23,6 +23,7 @@ struct Compiler {
     function_implementations: Vec<wasmly::Function>,
     non_imported_functions: Vec<String>,
     recur_depth: u32,
+    return_depth: u32,
 }
 
 impl Compiler {
@@ -40,6 +41,7 @@ impl Compiler {
             function_implementations: vec![],
             non_imported_functions: vec![],
             recur_depth: 0,
+            return_depth: 1,
         };
         c.initialize();
         c
@@ -367,7 +369,7 @@ impl Compiler {
                 let p = self.resolve_identifier(&x.id);
                 let idx = if p.is_some() {
                     let ident = p.unwrap();
-                    if ident.1 == IdentifierType::Local{
+                    if ident.1 == IdentifierType::Local {
                         ident.0 as u32
                     } else {
                         let l = self.local_names.len() as u32;
@@ -379,10 +381,12 @@ impl Compiler {
                     self.local_names.push((&x.id).to_string());
                     l
                 };
-                self.function_implementations[i]
-                    .with_instructions(vec![
-                        LOCAL_SET, idx.into(),
-                        LOCAL_GET, idx.into()]);
+                self.function_implementations[i].with_instructions(vec![
+                    LOCAL_SET,
+                    idx.into(),
+                    LOCAL_GET,
+                    idx.into(),
+                ]);
             }
             Expression::Let(x) => {
                 for j in 0..x.bindings.len() {
@@ -414,6 +418,20 @@ impl Compiler {
                         }
                     } else {
                         panic!("useless do detected")
+                    }
+                } else if &x.function_name == "assert" {
+                    if x.params.len() == 3 {
+                        self.process_expression(i, &x.params[0]);
+                        self.process_expression(i, &x.params[1]);
+                        self.function_implementations[i].with_instructions(vec![F64_EQ]);
+                        self.function_implementations[i].with_instructions(vec![IF, F64]);
+                        self.function_implementations[i]
+                            .with_instructions(vec![F64_CONST, 0.0.into()]);
+                        self.function_implementations[i].with_instructions(vec![ELSE]);
+                        self.process_expression(i, &x.params[2]);
+                        self.function_implementations[i].with_instructions(vec![BR, self.return_depth.into(), END]);
+                    } else {
+                        panic!("assert has 3 parameters")
                     }
                 } else if &x.function_name == "call" {
                     if x.params.len() >= 2 {

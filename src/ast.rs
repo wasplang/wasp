@@ -67,12 +67,11 @@ pub struct OperationLet {
 }
 
 #[derive(Debug, Clone)]
-pub struct OperationRecur {
-}
+pub struct OperationRecur {}
 
 #[derive(Debug, Clone)]
 pub struct OperationAssignment {
-    pub id:String,
+    pub id: String,
     pub value: Box<Expression>,
 }
 
