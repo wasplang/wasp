@@ -56,17 +56,35 @@ named!(
 );
 
 named!(
-    function_identifiers<CompleteStr,String>,
+    operator_identifiers<CompleteStr,String>,
     do_parse!(
-        id: alt!(map!(tag!("call"),to_string)|token_identifier|map!(tag!("do"),to_string)|map!(tag!("if"),to_string)|map!(tag!(">>"),to_string)|map!(tag!("<<"),to_string)|map!(tag!(">="),to_string)|map!(tag!("<="),to_string)|map!(tag!(">"),to_string)|map!(tag!("<"),to_string)|map!(tag!("or"),to_string)|map!(tag!("and"),to_string)|map!(tag!("!="),to_string)|map!(tag!("=="),to_string)|map!(tag!("+"),to_string)|map!(tag!("-"),to_string)|map!(tag!("*"),to_string)|map!(tag!("/"),to_string)|map!(tag!("%"),to_string)|map!(tag!("|"),to_string)|map!(tag!("&"),to_string)|map!(tag!("^"),to_string)|map!(tag!("~"),to_string)|map!(tag!("!"),to_string))>>
+        id: alt!(map!(tag!(">>"),to_string)|map!(tag!("<<"),to_string)|map!(tag!(">="),to_string)|map!(tag!("<="),to_string)|map!(tag!(">"),to_string)|map!(tag!("<"),to_string)|map!(tag!("or"),to_string)|map!(tag!("and"),to_string)|map!(tag!("!="),to_string)|map!(tag!("=="),to_string)|map!(tag!("+"),to_string)|map!(tag!("-"),to_string)|map!(tag!("*"),to_string)|map!(tag!("/"),to_string)|map!(tag!("%"),to_string)|map!(tag!("|"),to_string)|map!(tag!("&"),to_string))>>
         (id)
     )
 );
 
 named!(
+    unary_operator_identifiers<CompleteStr,String>,
+    do_parse!(
+        id: alt!(map!(tag!("^"),to_string)|map!(tag!("~"),to_string)|map!(tag!("!"),to_string))>>
+        (id)
+    )
+);
+
+
+named!(
+    function_identifiers<CompleteStr,String>,
+    do_parse!(
+        id: alt!(map!(tag!("call"),to_string)|token_identifier|map!(tag!("do"),to_string)|map!(tag!("if"),to_string))>>
+        (id)
+    )
+);
+
+
+named!(
     token_data_type<CompleteStr,DataType>,
     do_parse!(
-        t: map!(alt!(tag!("i32")|tag!("i64")|tag!("f32")|tag!("f64")), to_string) >>
+        t: map!(alt!(tag!("()")|tag!("i32")|tag!("i64")|tag!("f32")|tag!("f64")), to_string) >>
         (to_data_type(&t))
     )
 );
@@ -214,53 +232,34 @@ named!(expression_let<CompleteStr, Expression>,
 
 named!(expression_loop<CompleteStr, Expression>,
   do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
     ws!(tag!("loop"))   >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
-    many0!(ws!(token_comment)) >>
-    bindings: ws!(many0!(ws!(expression_let_pair))) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
+    ws!(tag!("{"))   >>
     expressions: ws!(many1!(ws!(expression))) >>
-    tag!(")")   >>
-    (Expression::Loop(OperationLoop{bindings:bindings,expressions:expressions}))
+    tag!("}")   >>
+    (Expression::Loop(OperationLoop{bindings:vec![],expressions:expressions}))
   )
 );
 
 named!(expression_recur<CompleteStr, Expression>,
   do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("recur"))   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
-    many0!(ws!(token_comment)) >>
-    bindings: ws!(many0!(ws!(expression_let_pair))) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
-    many0!(ws!(token_comment)) >>
-    tag!(")")   >>
-    (Expression::Recur(OperationRecur{bindings:bindings}))
+    tag!("recur")   >>
+    (Expression::Recur(OperationRecur{bindings:vec![]}))
   )
 );
 
 named!(expression_fnsig<CompleteStr, Expression>,
   do_parse!(
-    tag!("(")   >>
+    ws!(tag!("fn"))   >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("fnsig"))   >>
+    ws!(tag!("("))   >>
     many0!(ws!(token_comment)) >>
-    ws!(tag!("["))   >>
+    inputs: ws!(separated_list!(tag!(","),ws!(token_data_type))) >>
     many0!(ws!(token_comment)) >>
-    inputs: ws!(many0!(ws!(token_data_type))) >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("]"))   >>
+    ws!(tag!(")"))   >>
+    ws!(tag!("->"))   >>
     many0!(ws!(token_comment)) >>
     output: opt!(ws!(token_data_type)) >>
-    many0!(ws!(token_comment)) >>
-    tag!(")")   >>
     (Expression::FnSig(OperationFnSig{inputs:inputs, output:output}))
   )
 );
@@ -281,7 +280,7 @@ named!(expression_populate<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_let|expression_function_call|expression_populate|expression_fnsig|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
+    alt!(expression_if_statement|expression_fnsig|expression_let|expression_operator_call|expression_unary_operator_call|expression_function_call|expression_populate|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -289,6 +288,42 @@ named!(function_params<CompleteStr, Vec<Expression>>,
       op: ws!(separated_list!(tag!(","),ws!(expression))) >>
       (op)
     )
+);
+
+named!(expression_operator_call<CompleteStr, Expression>,
+  do_parse!(
+    tag!("(") >>
+    expr_a: ws!(expression) >>
+    function_name: ws!(operator_identifiers) >>
+    expr_b: ws!(expression) >>
+    tag!(")") >>
+    (Expression::FunctionCall(OperationFunctionCall{function_name:function_name,params:vec![expr_a,expr_b]}))
+  )
+);
+
+named!(expression_if_statement<CompleteStr, Expression>,
+  do_parse!(
+    ws!(tag!("if")) >>
+    ws!(tag!("(")) >>
+    expr_a: ws!(expression) >>
+    ws!(tag!(")")) >>
+    ws!(tag!("{")) >>
+    expr_b: ws!(expression) >>
+    tag!("}") >>
+    ws!(tag!("else")) >>
+    ws!(tag!("{")) >>
+    expr_c: ws!(expression) >>
+    tag!("}") >>
+    (Expression::FunctionCall(OperationFunctionCall{function_name:"if".to_string(),params:vec![expr_a,expr_b,expr_c]}))
+  )
+);
+
+named!(expression_unary_operator_call<CompleteStr, Expression>,
+  do_parse!(
+    function_name: ws!(unary_operator_identifiers) >>
+    expr_a: ws!(expression) >>
+    (Expression::FunctionCall(OperationFunctionCall{function_name:function_name,params:vec![expr_a]}))
+  )
 );
 
 named!(expression_function_call<CompleteStr, Expression>,

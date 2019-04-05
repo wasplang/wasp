@@ -3,7 +3,8 @@ fn is(c m){
     if(c success m)
 }
 
-test multiplication {
+pub fn test_multiplication {
+    if((4 == (2*2)))
     is(==(4 *(2 2)) "2 * 2 should be 4")
     is(==(1 *(1 1)) "1 * 1 should be 2")
 }

@@ -8,13 +8,13 @@ extern canvas_fill_rect(canvas,x,y,w,h)
 static colors = ("black","grey","red")
 
 pub fn main(){
- let(   window      global_get_window()
-        document    window_get_document(window)
-        canvas      document_query_selector(document,"#screen")
-        ctx         htmlcanvas_get_context(canvas,"2d")
-        ){
-     42
- }
+    x = global_get_window()
+    document = window_get_document(window)
+    canvas = document_query_selector(document,"#screen")
+    ctx = htmlcanvas_get_context(canvas,"2d")
+    loop{
+        42
+    }
 }
 // (pub defn main []
 //   (let [window (global_get_window)
