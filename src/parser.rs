@@ -215,19 +215,6 @@ named!(expression_let_pair<CompleteStr, (String, Expression)>,
   )
 );
 
-named!(expression_let<CompleteStr, Expression>,
-  do_parse!(
-    ws!(tag!("let"))   >>
-    ws!(tag!("("))   >>
-    bindings: ws!(many0!(ws!(expression_let_pair))) >>
-    ws!(tag!(")"))   >>
-    ws!(tag!("{"))   >>
-    expressions: ws!(many1!(ws!(expression))) >>
-    tag!("}")   >>
-    (Expression::Let(OperationLet{bindings:bindings,expressions:expressions}))
-  )
-);
-
 named!(expression_loop<CompleteStr, Expression>,
   do_parse!(
     ws!(tag!("loop"))   >>
@@ -262,23 +249,8 @@ named!(expression_fnsig<CompleteStr, Expression>,
   )
 );
 
-named!(expression_populate<CompleteStr, Expression>,
-  do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
-    tag!("#")   >>
-    many0!(ws!(token_comment)) >>
-    name: ws!(token_identifier) >>
-    many0!(ws!(token_comment)) >>
-    elements: ws!(many1!(ws!(expression))) >>
-    many0!(ws!(token_comment)) >>
-    tag!(")")   >>
-    (Expression::Populate(OperationPopulate{name:name, elements:elements}))
-  )
-);
-
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_if_statement|expression_fnsig|expression_let|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_populate|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
+    alt!(expression_if_statement|expression_fnsig|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,

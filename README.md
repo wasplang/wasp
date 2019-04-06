@@ -63,10 +63,6 @@ tail(cons(42,nil)) // returns the memory location of tail
 cons(1,cons(2,cons(3,nil))) // returns a linked list
 ```
 
-```rust
-nest(cons,1,2,3) // short hand for (cons 1 (cons 2 (cons 3 nil)))
-```
-
 ## Structs
 
 Structs are dictionaries
@@ -198,7 +194,6 @@ It's easiest to think that everything is a `f64` number in wasp.
 * **recur** - restarts a loop
 * **fn(x,x1 ..)->y** - gets the value of a function signature with inputs x0, x1, etc and output y
 * **call(x,f,y0,y1 ...)** call a function with signature x and function handle f with parameters y0, y1, ...
-* **nest(function_name,e1,e2,e3,...)** recursively call a chain of functions (<fn> e1 (<fn> e2 (<fn> e3 0))). This function works differently the more parameters your fn takes.
 
 ### Common Operators
 These oprators work pretty much how you'd expect if you've used C

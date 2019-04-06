@@ -239,73 +239,6 @@ impl Compiler {
                 let v = self.get_symbol_value(x);
                 self.function_implementations[i].with_instructions(vec![F64_CONST, v.into()]);
             }
-            Expression::Populate(x) => {
-                let val = self.resolve_identifier(&x.name).expect(&format!("{} is not a valid function",&x.name));
-                self.function_implementations[i].with_local(DataType::F64);
-                self.local_names.push("".to_string());
-                let loc_storage = (self.local_names.len() - 1) as i32;
-                match val.1 {
-                    IdentifierType::Function => {
-                        let fn_def = self
-                            .function_defs
-                            .iter()
-                            .find(|k| {
-                                if let TopLevelOperation::DefineFunction(y) = k {
-                                    y.name == x.name
-                                } else {
-                                    false
-                                }
-                            })
-                            .unwrap();
-                        let param_count = if let TopLevelOperation::DefineFunction(f) = fn_def {
-                            f.params.len() - 1
-                        } else {
-                            panic!("not sure how got here");
-                        };
-
-                        let expr: Vec<_> = x.elements.chunks(param_count).rev().collect();
-                        for j in 0..expr.len() {
-                            if j == 0 && j != expr.len() - 1 {
-                                for k in 0..expr[j].len() {
-                                    self.process_expression(i, &expr[j][k])
-                                }
-                                self.function_implementations[i].with_instructions(vec![
-                                    F64_CONST,
-                                    0.0.into(),
-                                    CALL,
-                                    (val.0 as i32).into(),
-                                    LOCAL_SET,
-                                    (loc_storage as i32).into(),
-                                ]);
-                            } else if j == expr.len() - 1 {
-                                for k in 0..expr[j].len() {
-                                    self.process_expression(i, &expr[j][k])
-                                }
-                                self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET,
-                                    (loc_storage as i32).into(),
-                                    CALL,
-                                    (val.0 as i32).into(),
-                                ]);
-                                break;
-                            } else {
-                                for k in 0..expr[j].len() {
-                                    self.process_expression(i, &expr[j][k])
-                                }
-                                self.function_implementations[i].with_instructions(vec![
-                                    LOCAL_GET,
-                                    (loc_storage as i32).into(),
-                                    CALL,
-                                    (val.0 as i32).into(),
-                                    LOCAL_SET,
-                                    (loc_storage as i32).into(),
-                                ]);
-                            }
-                        }
-                    }
-                    _ => panic!("cannot populate on non function"),
-                }
-            }
             Expression::FnSig(x) => {
                 let t = self
                     .wasm
@@ -388,38 +321,8 @@ impl Compiler {
                     idx.into(),
                 ]);
             }
-            Expression::Let(x) => {
-                for j in 0..x.bindings.len() {
-                    let binding = &x.bindings[j];
-                    self.process_expression(i, &binding.1);
-                    self.function_implementations[i].with_local(DataType::F64);
-                    self.function_implementations[i]
-                        .with_instructions(vec![LOCAL_SET, (self.local_names.len() as u32).into()]);
-                    self.local_names.push((&binding.0).to_string());
-                }
-                for k in 0..x.expressions.len() {
-                    self.process_expression(i, &x.expressions[k]);
-                    if k != x.expressions.len() - 1 {
-                        self.function_implementations[i].with_instructions(vec![DROP]);
-                    }
-                }
-                for _ in 0..x.bindings.len() {
-                    self.local_names.pop();
-                }
-            }
             Expression::FunctionCall(x) => {
-                if &x.function_name == "do" {
-                    if !x.params.is_empty() {
-                        for k in 0..x.params.len() {
-                            self.process_expression(i, &x.params[k]);
-                            if k != x.params.len() - 1 {
-                                self.function_implementations[i].with_instructions(vec![DROP]);
-                            }
-                        }
-                    } else {
-                        panic!("useless do detected")
-                    }
-                } else if &x.function_name == "assert" {
+                if &x.function_name == "assert" {
                     if x.params.len() == 3 {
                         self.process_expression(i, &x.params[0]);
                         self.process_expression(i, &x.params[1]);

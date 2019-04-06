@@ -61,12 +61,6 @@ pub struct OperationFunctionCall {
 }
 
 #[derive(Debug, Clone)]
-pub struct OperationLet {
-    pub bindings: Vec<(String, Expression)>,
-    pub expressions: Vec<Expression>,
-}
-
-#[derive(Debug, Clone)]
 pub struct OperationRecur {}
 
 #[derive(Debug, Clone)]
@@ -94,12 +88,6 @@ pub struct OperationFnSig {
 }
 
 #[derive(Debug, Clone)]
-pub struct OperationPopulate {
-    pub name: String,
-    pub elements: Vec<Expression>,
-}
-
-#[derive(Debug, Clone)]
 pub enum Expression {
     IfStatement(OperationIfStatement),
     Assignment(OperationAssignment),
@@ -109,8 +97,6 @@ pub enum Expression {
     Comment(String),
     FunctionCall(OperationFunctionCall),
     Number(f64),
-    Let(OperationLet),
-    Populate(OperationPopulate),
     Recur(OperationRecur),
     Loop(OperationLoop),
     FnSig(OperationFnSig),
