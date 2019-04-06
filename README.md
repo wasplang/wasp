@@ -6,6 +6,7 @@ a programming language for extremely concise web assembly modules
 ```rust
 // main.w
 extern console_log(message)
+
 pub fn main(){
   console_log("Hello World!")
 }
