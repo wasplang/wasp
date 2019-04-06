@@ -127,6 +127,7 @@ It's often important for a web assembly modules to have some sort of global data
 
 ```rust
 high_score = 0
+
 fn run_my_game(){
   ...
   mem_num(high_score,(mem_num(high_score) + 100))
@@ -174,7 +175,7 @@ It's easiest to think that everything is a `f64` number in wasp.
 
 ## Globals
 * **nil** - a number that represents nothingness (0). Note that it is also the same value as false and the number 0.
-* **sizenum** - the length of a number in bytes (8). This is a global variable in wasp to cut down in magic numbers floating around in code.
+* **size_num** - the length of a number in bytes (8). This is a global variable in wasp to cut down in magic numbers floating around in code.
 
 ## Functions
 * **[pub] fn name (x,...){ ... })** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
