@@ -105,7 +105,7 @@ pub fn main(){
         // get the offset for the color to use
         color_offset = (colors + (x * size_num))
         // set current color to string at that position
-        canvas_set_fill_style(ctx,mem_num(color_offset))
+        canvas_set_fill_style(ctx,mem(color_offset))
         // draw the rect
         canvas_fill_rect(ctx,(x * 10),(x * 10),50,50)
         // recur until 3 squares are drawn
@@ -128,7 +128,7 @@ high_score = 0
 
 fn run_my_game(){
   ...
-  mem_num(high_score,(mem_num(high_score) + 100))
+  mem(high_score,(mem(high_score) + 100))
   ...
 }
 ```
@@ -178,10 +178,10 @@ It's easiest to think that everything is a `f64` number in wasp.
 ## Functions
 * **[pub] fn name (x,...){ ... })** - create a function that executes a list of expressions returning the result of the last one. Optionally provide an export name to make visible to host.
 * **function_name(...)** - call a function with arguments
-* **mem(x:integer)** - get 8-bit value from memory location x
-* **mem(x:integer y)** - set 8-bit value at memory location x to value y
-* **mem_num(x:integer)** - get 64-bit float value from memory location x
-* **mem_num(x:integer y)** - set 64-bit float value at memory location x to value y
+* **mem_byte(x:integer)** - get 8-bit value from memory location x
+* **mem_byte(x:integer y)** - set 8-bit value at memory location x to value y
+* **mem(x:integer)** - get 64-bit float value from memory location x
+* **mem(x:integer y)** - set 64-bit float value at memory location x to value y
 
 * **mem_heap_start()** - get number that represents the start of the heap
 * **mem_heap_end()** - get number that represents the end of the heap

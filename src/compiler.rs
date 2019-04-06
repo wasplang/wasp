@@ -368,7 +368,7 @@ impl Compiler {
                     } else {
                         panic!("call must have at least function signature and function index")
                     }
-                } else if &x.function_name == "mem" {
+                } else if &x.function_name == "mem_byte" {
                     if x.params.len() == 1 {
                         self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![I32_TRUNC_S_F64]);
@@ -392,7 +392,7 @@ impl Compiler {
                         self.function_implementations[i]
                             .with_instructions(vec![F64_CONST, 0.0.into()]);
                     } else {
-                        panic!("invalid number params for mem")
+                        panic!("invalid number params for mem_byte")
                     }
                 } else if &x.function_name == "mem_heap_start" {
                     if x.params.len() == 0 {
@@ -423,7 +423,7 @@ impl Compiler {
                     } else {
                         panic!("invalid number params for mem_heap_start")
                     }
-                } else if &x.function_name == "mem_num" {
+                } else if &x.function_name == "mem" {
                     if x.params.len() == 1 {
                         self.process_expression(i, &x.params[0]);
                         self.function_implementations[i].with_instructions(vec![
@@ -444,7 +444,7 @@ impl Compiler {
                         self.function_implementations[i]
                             .with_instructions(vec![F64_CONST, 0.0.into()]);
                     } else {
-                        panic!("invalid number params for mem_num")
+                        panic!("invalid number params for mem")
                     }
                 } else if &x.function_name == "=="
                     || &x.function_name == "!="

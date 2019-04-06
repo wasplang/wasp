@@ -19,7 +19,7 @@ pub fn main(){
         // get the offset for the color to use
         color_offset = (colors + (x * size_num))
         // set current color to string at that position
-        canvas_set_fill_style(ctx,mem_num(color_offset))
+        canvas_set_fill_style(ctx,mem(color_offset))
         // draw the rect
         canvas_fill_rect(ctx,(x * 10),(x * 10),50,50)
         // recur until 3 squares are drawn
