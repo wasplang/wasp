@@ -212,7 +212,7 @@ named!(expression_loop<CompleteStr, Expression>,
     ws!(tag!("loop"))   >>
     many0!(ws!(token_comment)) >>
     ws!(tag!("{"))   >>
-    expressions: ws!(many1!(ws!(expression))) >>
+    expressions: expression_list >>
     tag!("}")   >>
     (Expression::Loop(OperationLoop{expressions:expressions}))
   )
@@ -243,6 +243,21 @@ named!(expression_fnsig<CompleteStr, Expression>,
 
 named!(expression<CompleteStr, Expression>,
     alt!(expression_if_statement|expression_fnsig|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_literal_token|expression_literal_string|expression_identifier)
+);
+
+named!(expression_list_item<CompleteStr, Expression>,
+    do_parse!(
+      many0!(ws!(token_comment)) >>
+      expr: ws!(expression) >>
+      (expr)
+    )
+);
+
+named!(expression_list<CompleteStr, Vec<Expression>>,
+    do_parse!(
+      exprs: ws!(ws!(many1!(ws!(expression_list_item)))) >>
+      (exprs)
+    )
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -276,7 +291,7 @@ named!(expression_else_statement<CompleteStr, Vec<Expression>>,
   do_parse!(
     ws!(tag!("else")) >>
     ws!(tag!("{")) >>
-    expr_c: ws!(ws!(many1!(ws!(expression)))) >>
+    expr_c: expression_list >>
     tag!("}") >>
     (expr_c)
   )
@@ -287,7 +302,7 @@ named!(expression_if_statement<CompleteStr, Expression>,
     ws!(tag!("if")) >>
     expr_a: ws!(expression) >>
     ws!(tag!("{")) >>
-    expr_b: ws!(ws!(many1!(ws!(expression)))) >>
+    expr_b: expression_list >>
     tag!("}") >>
     expr_c: ws!(opt!(expression_else_statement)) >>
     (Expression::IfStatement(OperationIfStatement{condition:Box::new(expr_a),if_true:expr_b,if_false:expr_c}))
@@ -312,13 +327,6 @@ named!(expression_function_call<CompleteStr, Expression>,
   )
 );
 
-named!(function_operations<CompleteStr, Vec<Expression>>,
-  do_parse!(
-    op: many1!(ws!(expression)) >>
-    (op)
-  )
-);
-
 named!(define_function<CompleteStr, TopLevelOperation>,
   do_parse!(
     external_name:opt!( ws!(tag!("pub"))) >>
@@ -334,7 +342,7 @@ named!(define_function<CompleteStr, TopLevelOperation>,
     ws!(tag!(")"))   >>
     many0!(ws!(token_comment)) >>
     ws!(tag!("{"))   >>
-    children: function_operations >>
+    children: expression_list >>
     tag!("}")   >>
     (TopLevelOperation::DefineFunction(FunctionDefinition{name: function_name,
     exported: external_name.is_some(),
