@@ -4,7 +4,6 @@ a programming language for extremely concise web assembly modules
 **warning:** this compiler is very alpha and error messages aren't the best, but it works and language is simple!
 
 ```rust
-// main.w
 extern console_log(message)
 
 pub fn main(){
