@@ -383,15 +383,15 @@ named!(struct_pair<CompleteStr, StructMember>,
 
 named!(define_struct<CompleteStr, TopLevelOperation>,
   do_parse!(
-    tag!("(")   >>
-    many0!(ws!(token_comment)) >>
-    ws!(tag!("defstruct"))   >>
+    ws!(tag!("struct"))   >>
     many0!(ws!(token_comment)) >>
     name: ws!(token_identifier) >>
     many0!(ws!(token_comment)) >>
+    tag!("{")   >>
+    many0!(ws!(token_comment)) >>
     members: many0!(ws!(struct_pair)) >>
     many0!(ws!(token_comment)) >>
-    tag!(")")   >>
+    tag!("}")   >>
     (TopLevelOperation::DefineGlobal(Global{name:name,value:GlobalValue::Struct(StructDefinition{
     members: members})}))
   )

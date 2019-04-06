@@ -138,7 +138,7 @@ impl Compiler {
                 t.push(GlobalValue::Number(0.0));
                 self.create_global_data(t)
             }
-            GlobalValue::Identifier(t) => self.resolve_identifier(t).unwrap().0,
+            GlobalValue::Identifier(t) => self.resolve_identifier(t).expect(&format!("{} is not a valid identifier",&t)).0,
         }
     }
 
@@ -229,7 +229,6 @@ impl Compiler {
         if p.is_some() {
             return Some((self.global_values[p.unwrap()], IdentifierType::Global));
         }
-        println!("could not find {}",id);
         None
     }
 
@@ -241,7 +240,7 @@ impl Compiler {
                 self.function_implementations[i].with_instructions(vec![F64_CONST, v.into()]);
             }
             Expression::Populate(x) => {
-                let val = self.resolve_identifier(&x.name).unwrap();
+                let val = self.resolve_identifier(&x.name).expect(&format!("{} is not a valid function",&x.name));
                 self.function_implementations[i].with_local(DataType::F64);
                 self.local_names.push("".to_string());
                 let loc_storage = (self.local_names.len() - 1) as i32;
@@ -698,7 +697,7 @@ impl Compiler {
                         F64_CONVERT_S_I32,
                     ]);
                 } else {
-                    let (function_handle, _) = self.resolve_identifier(&x.function_name).unwrap();
+                    let (function_handle, _) = self.resolve_identifier(&x.function_name).expect(&format!("{} is not a valid function",&x.function_name));
                     for k in 0..x.params.len() {
                         self.process_expression(i, &x.params[k])
                     }
@@ -712,7 +711,7 @@ impl Compiler {
                     .with_instructions(vec![F64_CONST, (pos as f64).into()]);
             }
             Expression::Identifier(x) => {
-                let val = self.resolve_identifier(&x).unwrap();
+                let val = self.resolve_identifier(&x).expect(&format!("{} is not a valid identifier",&x));
                 match val.1 {
                     IdentifierType::Global => {
                         self.function_implementations[i]
