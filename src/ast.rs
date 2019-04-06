@@ -73,7 +73,7 @@ pub struct OperationAssignment {
 pub struct OperationIfStatement {
     pub condition: Box<Expression>,
     pub if_true: Vec<Expression>,
-    pub if_false: Vec<Expression>,
+    pub if_false: Option<Vec<Expression>>,
 }
 
 #[derive(Debug, Clone)]
@@ -94,7 +94,6 @@ pub enum Expression {
     TextLiteral(String),
     SymbolLiteral(String),
     Identifier(String),
-    Comment(String),
     FunctionCall(OperationFunctionCall),
     Number(f64),
     Recur(OperationRecur),

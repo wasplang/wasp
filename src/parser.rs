@@ -157,14 +157,6 @@ named!(external_function<CompleteStr, TopLevelOperation>,
   )
 );
 
-named!(expression_comment<CompleteStr, Expression>,
-  do_parse!(
-    tag!("//") >>
-    comment: map!(take_while!(is_comment_char),to_string) >>
-    (Expression::Comment(comment))
-  )
-);
-
 named!(expression_literal_string<CompleteStr, Expression>,
     do_parse!(
       text: ws!(token_text) >>
@@ -250,7 +242,7 @@ named!(expression_fnsig<CompleteStr, Expression>,
 );
 
 named!(expression<CompleteStr, Expression>,
-    alt!(expression_if_statement|expression_fnsig|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_comment|expression_literal_token|expression_literal_string|expression_identifier)
+    alt!(expression_if_statement|expression_fnsig|expression_operator_call|expression_unary_operator_call|expression_assignment|expression_function_call|expression_loop|expression_recur|expression_number|boolean_true|boolean_false|expression_literal_token|expression_literal_string|expression_identifier)
 );
 
 named!(function_params<CompleteStr, Vec<Expression>>,
@@ -280,6 +272,16 @@ named!(expression_assignment<CompleteStr, Expression>,
   )
 );
 
+named!(expression_else_statement<CompleteStr, Vec<Expression>>,
+  do_parse!(
+    ws!(tag!("else")) >>
+    ws!(tag!("{")) >>
+    expr_c: ws!(ws!(many1!(ws!(expression)))) >>
+    tag!("}") >>
+    (expr_c)
+  )
+);
+
 named!(expression_if_statement<CompleteStr, Expression>,
   do_parse!(
     ws!(tag!("if")) >>
@@ -287,10 +289,7 @@ named!(expression_if_statement<CompleteStr, Expression>,
     ws!(tag!("{")) >>
     expr_b: ws!(ws!(many1!(ws!(expression)))) >>
     tag!("}") >>
-    ws!(tag!("else")) >>
-    ws!(tag!("{")) >>
-    expr_c: ws!(ws!(many1!(ws!(expression)))) >>
-    tag!("}") >>
+    expr_c: ws!(opt!(expression_else_statement)) >>
     (Expression::IfStatement(OperationIfStatement{condition:Box::new(expr_a),if_true:expr_b,if_false:expr_c}))
   )
 );

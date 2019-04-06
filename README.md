@@ -112,8 +112,6 @@ pub fn main(){
         x = (x + 1)
         if (x < 3) {
             recur
-        } else {
-            0
         }
     }
 }

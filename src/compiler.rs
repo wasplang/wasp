@@ -288,11 +288,15 @@ impl Compiler {
                     }
                 }
                 self.function_implementations[i].with_instructions(vec![ELSE]);
-                for k in 0..x.if_false.len() {
-                    self.process_expression(i, &x.if_false[k]);
-                    if k != x.if_false.len() - 1 {
-                        self.function_implementations[i].with_instructions(vec![DROP]);
+                if x.if_false.is_some(){
+                    for k in 0..x.if_false.as_ref().unwrap().len() {
+                        self.process_expression(i, &x.if_false.as_ref().unwrap()[k]);
+                        if k != x.if_false.as_ref().unwrap().len() - 1 {
+                            self.function_implementations[i].with_instructions(vec![DROP]);
+                        }
                     }
+                } else {
+                    self.function_implementations[i].with_instructions(vec![F64_CONST,0.0.into()]);
                 }
                 self.function_implementations[i].with_instructions(vec![END]);
             }
@@ -630,7 +634,6 @@ impl Compiler {
                     }
                 }
             }
-            Expression::Comment(_) => {}
             Expression::Number(x) => {
                 self.function_implementations[i].with_instructions(vec![F64_CONST, (*x).into()]);
             }
