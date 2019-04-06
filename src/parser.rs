@@ -358,7 +358,7 @@ named!(define_function<CompleteStr, TopLevelOperation>,
     many0!(ws!(token_comment)) >>
     ws!(tag!("("))   >>
     many0!(ws!(token_comment)) >>
-    params: many0!(ws!(token_identifier)) >>
+    params: ws!(separated_list!(tag!(","),ws!(token_identifier))) >>
     many0!(ws!(token_comment)) >>
     ws!(tag!(")"))   >>
     many0!(ws!(token_comment)) >>

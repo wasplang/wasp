@@ -229,6 +229,7 @@ impl Compiler {
         if p.is_some() {
             return Some((self.global_values[p.unwrap()], IdentifierType::Global));
         }
+        println!("could not find {}",id);
         None
     }
 
