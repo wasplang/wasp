@@ -1,0 +1,15 @@
+[package]
+name = "wasp-core"
+version = "0.1.0"
+authors = ["Richard Anaya"]
+edition = "2018"
+license = "MIT"
+description = "Core compiling logic of wasp"
+
+[dependencies]
+failure = "0.1.5"
+wasmly = "0.2.0"
+
+[dependencies.nom]
+version = "4"
+features = ["verbose-errors"]

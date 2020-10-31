@@ -1,5 +1,5 @@
 build:
-	cargo build
+	cd wasp && cargo build
 	cd examples/helloworld && make
 	cd examples/canvas && make
 	cd examples/testing && make

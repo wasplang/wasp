@@ -3,15 +3,12 @@ use std::env;
 use std::fs::metadata;
 use std::fs::File;
 use std::io::prelude::*;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate nom;
 use std::str;
 extern crate clap;
 use clap::{App, AppSettings, Arg, SubCommand};
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader};
+use wasp_core::{compiler,parser};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -28,9 +25,7 @@ fn write_output(bytes: &[u8], output_file: Option<&str>) -> std::io::Result<()> 
     Ok(())
 }
 
-mod ast;
-mod compiler;
-mod parser;
+
 
 fn run(content: &str) -> Result<Vec<u8>, Error> {
     let app = parser::parse(content)?;

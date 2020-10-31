@@ -138,7 +138,11 @@ impl Compiler {
                 t.push(GlobalValue::Number(0.0));
                 self.create_global_data(t)
             }
-            GlobalValue::Identifier(t) => self.resolve_identifier(t).expect(&format!("{} is not a valid identifier",&t)).0,
+            GlobalValue::Identifier(t) => {
+                self.resolve_identifier(t)
+                    .expect(&format!("{} is not a valid identifier", &t))
+                    .0
+            }
         }
     }
 
@@ -288,7 +292,7 @@ impl Compiler {
                     }
                 }
                 self.function_implementations[i].with_instructions(vec![ELSE]);
-                if x.if_false.is_some(){
+                if x.if_false.is_some() {
                     for k in 0..x.if_false.as_ref().unwrap().len() {
                         self.process_expression(i, &x.if_false.as_ref().unwrap()[k]);
                         if k != x.if_false.as_ref().unwrap().len() - 1 {
@@ -296,7 +300,7 @@ impl Compiler {
                         }
                     }
                 } else {
-                    self.function_implementations[i].with_instructions(vec![F64_CONST,0.0.into()]);
+                    self.function_implementations[i].with_instructions(vec![F64_CONST, 0.0.into()]);
                 }
                 self.function_implementations[i].with_instructions(vec![END]);
             }
@@ -336,7 +340,11 @@ impl Compiler {
                             .with_instructions(vec![F64_CONST, 0.0.into()]);
                         self.function_implementations[i].with_instructions(vec![ELSE]);
                         self.process_expression(i, &x.params[2]);
-                        self.function_implementations[i].with_instructions(vec![BR, self.return_depth.into(), END]);
+                        self.function_implementations[i].with_instructions(vec![
+                            BR,
+                            self.return_depth.into(),
+                            END,
+                        ]);
                     } else {
                         panic!("assert has 3 parameters")
                     }
@@ -604,7 +612,9 @@ impl Compiler {
                         F64_CONVERT_S_I32,
                     ]);
                 } else {
-                    let (function_handle, _) = self.resolve_identifier(&x.function_name).expect(&format!("{} is not a valid function",&x.function_name));
+                    let (function_handle, _) = self
+                        .resolve_identifier(&x.function_name)
+                        .expect(&format!("{} is not a valid function", &x.function_name));
                     for k in 0..x.params.len() {
                         self.process_expression(i, &x.params[k])
                     }
@@ -618,7 +628,9 @@ impl Compiler {
                     .with_instructions(vec![F64_CONST, (pos as f64).into()]);
             }
             Expression::Identifier(x) => {
-                let val = self.resolve_identifier(&x).expect(&format!("{} is not a valid identifier",&x));
+                let val = self
+                    .resolve_identifier(&x)
+                    .expect(&format!("{} is not a valid identifier", &x));
                 match val.1 {
                     IdentifierType::Global => {
                         self.function_implementations[i]
