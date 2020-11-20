@@ -80,7 +80,7 @@ pub fn create_point(){
 
 # Drawing
 
-Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something to screen. Loops in wasp work differently than other languages, bbserve how this example uses recursion to rebind variables.
+Using [web-dom](https://github.com/web-dom/web-dom) we can easily draw something to screen. Loops in wasp work differently than other languages, observe how this example uses recursion to rebind variables.
 
 ```rust
 extern console_log(msg)
